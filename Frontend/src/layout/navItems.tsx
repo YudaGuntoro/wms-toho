@@ -41,6 +41,7 @@ export const navItems: NavItem[] = [
       { name: "Parts", path: "/parts" },
       { name: "Locations", path: "/locations" },
       { name: "Staff Cards", path: "/pic-cards" },
+      { name: "Users", path: "/users" },
     ],
   },
 ];

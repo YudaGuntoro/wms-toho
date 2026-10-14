@@ -12,8 +12,10 @@ import UserService, { User } from "@/services/UserService";
 import UserModal from "./UserModal";
 
 const roleOptions = [
-  { label: "Admin", value: "admin" },
-  { label: "User", value: "user" },
+  { label: "Admin", value: "ADMIN" },
+  { label: "Supervisor", value: "SUPERVISOR" },
+  { label: "Operator", value: "OPERATOR" },
+  { label: "Viewer", value: "VIEWER" },
 ];
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -60,18 +62,18 @@ const formatRole = (role: string) => {
 
 const baseColumns: DataTableColumn<User>[] = [
   {
-    key: "name",
+    key: "full_name",
     header: "User",
     className: "min-w-64",
     sortable: true,
     render: (_, row) => (
       <div className="flex items-center gap-3">
         <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-sm font-semibold text-brand-600 dark:bg-brand-500/15 dark:text-brand-300">
-          {getInitials(row.name || row.username)}
+          {getInitials(row.full_name || row.username)}
         </div>
         <div>
           <div className="font-medium text-gray-800 dark:text-white/90">
-            {row.name || "-"}
+            {row.full_name || "-"}
           </div>
           <div className="text-theme-xs text-gray-500 dark:text-gray-400">
             @{row.username}
@@ -90,16 +92,16 @@ const baseColumns: DataTableColumn<User>[] = [
     ),
   },
   {
-    key: "isActive",
+    key: "status",
     header: "Status",
     render: (value) => (
-      <Badge color={value ? "success" : "error"} size="sm">
-        {value ? "Active" : "Inactive"}
+      <Badge color={value === "ACTIVE" ? "success" : "error"} size="sm">
+        {value === "ACTIVE" ? "Active" : "Inactive"}
       </Badge>
     ),
   },
   {
-    key: "createdAt",
+    key: "created_at",
     header: "Created At",
     render: (value) => (typeof value === "string" ? formatDate(value) : "-"),
   },
@@ -272,7 +274,7 @@ export default function UserTable() {
         onClose={closeDeleteModal}
         onConfirm={confirmDelete}
         title="Delete User"
-        message={`Are you sure you want to delete user "${userToDelete?.name}"?`}
+        message={`Are you sure you want to delete user "${userToDelete?.full_name}"?`}
         confirmText="Delete"
         isDestructive={true}
         isLoading={isDeleting}

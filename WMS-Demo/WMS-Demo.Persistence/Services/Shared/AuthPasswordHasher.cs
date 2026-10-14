@@ -3,7 +3,7 @@ using System.Text;
 
 namespace WMSDemo.Persistence.Services.Shared;
 
-internal static class AuthPasswordHasher
+public static class AuthPasswordHasher
 {
     private const int SaltSize = 16;
     private const int HashSize = 32;

@@ -16,27 +16,34 @@ export type ApiListResponse<T> = {
 
 export type User = {
   id: number;
-  name: string;
   username: string;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt?: string;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  role: "ADMIN" | "SUPERVISOR" | "OPERATOR" | "VIEWER";
+  status: "ACTIVE" | "INACTIVE";
+  last_login_at?: string | null;
+  created_at: string;
+  updated_at?: string;
 };
 
 export type UserCreatePayload = {
-  name: string;
   username: string;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
   password: string;
-  role: string;
-  isActive: boolean;
+  role: User["role"];
+  status: User["status"];
 };
 
 export type UserUpdatePayload = {
-  name: string;
   username: string;
-  role: string;
-  isActive: boolean;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  role: User["role"];
+  status: User["status"];
 };
 
 export type UserQuery = {
