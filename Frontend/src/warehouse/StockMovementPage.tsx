@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { Modal } from "@/components/ui/modal";
+import { ConfirmModal } from "@/components/ui/modal/ConfirmModal";
 import { TrashBinIcon } from "@/icons";
 import StockMovementService, {
   StockMovement,
@@ -353,6 +354,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [qrItem, setQrItem] = useState<StockMovement | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<StockMovement | null>(null);
   const [selectedQrIds, setSelectedQrIds] = useState<number[]>([]);
   const [form, setForm] = useState<StockMovementPayload>({
     part_number: "",
@@ -525,23 +527,18 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     }
   }
 
-  async function deleteMovement(item: StockMovement) {
-    const confirmed = window.confirm(
-      type === "IN"
-        ? `Delete stock in "${item.part_number}" at ${item.location}? If stock out already exists, delete will be rejected.`
-        : `Delete stock out "${item.part_number}" at ${item.location}?`
-    );
-
-    if (!confirmed) {
+  async function confirmDeleteMovement() {
+    if (!itemToDelete) {
       return;
     }
 
-    setDeletingId(item.id);
+    setDeletingId(itemToDelete.id);
     setMessage(null);
     try {
-      await StockMovementService.deleteMovement(item.id);
-      setSelectedQrIds((current) => current.filter((id) => id !== item.id));
+      await StockMovementService.deleteMovement(itemToDelete.id);
+      setSelectedQrIds((current) => current.filter((id) => id !== itemToDelete.id));
       setMessage({ kind: "ok", text: `${title} deleted successfully.` });
+      setItemToDelete(null);
       await load();
     } catch (error) {
       setMessage({ kind: "error", text: error instanceof Error ? error.message : `Failed to delete ${title}.` });
@@ -673,7 +670,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                 <button
                   className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-200 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                   disabled={deletingId === item.id}
-                  onClick={() => void deleteMovement(item)}
+                  onClick={() => setItemToDelete(item)}
                   type="button"
                 >
                   <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
@@ -741,7 +738,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                     <button
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                       disabled={deletingId === item.id}
-                      onClick={() => void deleteMovement(item)}
+                      onClick={() => setItemToDelete(item)}
                       title="Delete"
                       type="button"
                     >
@@ -758,6 +755,26 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
       </section>
 
       {type === "IN" ? <QrModal item={qrItem} onClose={() => setQrItem(null)} /> : null}
+      <ConfirmModal
+        confirmText="Delete"
+        isDestructive
+        isLoading={deletingId === itemToDelete?.id}
+        isOpen={Boolean(itemToDelete)}
+        message={
+          itemToDelete
+            ? type === "IN"
+              ? `Delete stock in "${itemToDelete.part_number}" at ${itemToDelete.location}? If stock out already exists, delete will be rejected.`
+              : `Delete stock out "${itemToDelete.part_number}" at ${itemToDelete.location}?`
+            : ""
+        }
+        onClose={() => {
+          if (!deletingId) {
+            setItemToDelete(null);
+          }
+        }}
+        onConfirm={() => void confirmDeleteMovement()}
+        title={`Delete ${title}`}
+      />
     </div>
   );
 }

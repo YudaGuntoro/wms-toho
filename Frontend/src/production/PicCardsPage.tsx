@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { ConfirmModal } from "@/components/ui/modal/ConfirmModal";
 import { PencilIcon, TrashBinIcon } from "@/icons";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import type { PicCard, PicCardPayload, ShiftMaster } from "./types";
@@ -24,6 +25,7 @@ export default function PicCardsPage() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<PicCard | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<PicCard | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,16 +100,17 @@ export default function PicCardsPage() {
     });
   }
 
-  async function deleteCard(item: PicCard) {
-    if (!window.confirm(`Delete staff card for "${item.full_name}"?`)) {
+  async function confirmDeleteCard() {
+    if (!itemToDelete) {
       return;
     }
 
-    setDeletingId(item.id);
+    setDeletingId(itemToDelete.id);
     setMessage(null);
     try {
-      await apiDelete<boolean>(`/api/production/pic-cards/${item.id}`);
+      await apiDelete<boolean>(`/api/production/pic-cards/${itemToDelete.id}`);
       setMessage({ kind: "ok", text: "Staff card deleted successfully." });
+      setItemToDelete(null);
       await load();
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Failed to delete staff card." });
@@ -224,7 +227,7 @@ export default function PicCardsPage() {
                 <button
                   className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-200 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                   disabled={deletingId === item.id}
-                  onClick={() => void deleteCard(item)}
+                  onClick={() => setItemToDelete(item)}
                   type="button"
                 >
                   <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
@@ -273,7 +276,7 @@ export default function PicCardsPage() {
                     <button
                       className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                       disabled={deletingId === item.id}
-                      onClick={() => void deleteCard(item)}
+                      onClick={() => setItemToDelete(item)}
                       title="Delete"
                       type="button"
                     >
@@ -289,6 +292,20 @@ export default function PicCardsPage() {
           {loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">Loading...</p> : null}
         </div>
       </div>
+      <ConfirmModal
+        confirmText="Delete"
+        isDestructive
+        isLoading={deletingId === itemToDelete?.id}
+        isOpen={Boolean(itemToDelete)}
+        message={itemToDelete ? `Delete staff card for "${itemToDelete.full_name}"?` : ""}
+        onClose={() => {
+          if (!deletingId) {
+            setItemToDelete(null);
+          }
+        }}
+        onConfirm={() => void confirmDeleteCard()}
+        title="Delete Staff Card"
+      />
     </div>
   );
 }
