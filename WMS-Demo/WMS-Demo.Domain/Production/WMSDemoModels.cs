@@ -177,6 +177,27 @@ public class CreateLocationRequest
     public bool IsActive { get; set; } = true;
 }
 
+public class CreatePicCardRequest
+{
+    [JsonPropertyName("card_uid")]
+    public string CardUid { get; set; } = string.Empty;
+
+    [JsonPropertyName("employee_no")]
+    public string EmployeeNo { get; set; } = string.Empty;
+
+    [JsonPropertyName("full_name")]
+    public string FullName { get; set; } = string.Empty;
+
+    [JsonPropertyName("department")]
+    public string Department { get; set; } = "Warehouse";
+
+    [JsonPropertyName("shift_id")]
+    public int ShiftId { get; set; }
+
+    [JsonPropertyName("is_active")]
+    public bool IsActive { get; set; } = true;
+}
+
 public class CreateStockMovementRequest
 {
     [JsonPropertyName("part_number")]

@@ -11,6 +11,15 @@ export type PicCard = {
   created_at: string;
 };
 
+export type PicCardPayload = {
+  card_uid: string;
+  employee_no: string;
+  full_name: string;
+  department: string;
+  shift_id: number;
+  is_active: boolean;
+};
+
 export type ShiftMaster = {
   id: number;
   shift_code: string;
