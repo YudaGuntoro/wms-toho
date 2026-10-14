@@ -36,7 +36,7 @@ export class ApiError<T = unknown> extends Error {
   }
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5242";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 const DEFAULT_TIMEOUT = 30000;
 
 const buildQueryString = (params?: QueryParams) => {
