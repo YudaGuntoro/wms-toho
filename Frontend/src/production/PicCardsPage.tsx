@@ -230,7 +230,7 @@ export default function PicCardsPage() {
                   onClick={() => setItemToDelete(item)}
                   type="button"
                 >
-                  <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
+                  <TrashBinIcon className="h-5 w-5 shrink-0 fill-current" />
                   {deletingId === item.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
@@ -280,7 +280,7 @@ export default function PicCardsPage() {
                       title="Delete"
                       type="button"
                     >
-                      <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
+                      <TrashBinIcon className="h-5 w-5 shrink-0 fill-current" />
                     </button>
                     </div>
                   </td>
