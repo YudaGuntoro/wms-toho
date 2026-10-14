@@ -81,7 +81,7 @@ export default function PicCardsPage() {
       resetForm();
       await load();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : `Failed to ${editingItem ? "update" : "add"} staff card.` });
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : `Failed to ${editingItem ? "update" : "add"} staff list.` });
     } finally {
       setSaving(false);
     }
@@ -113,7 +113,7 @@ export default function PicCardsPage() {
       setItemToDelete(null);
       await load();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Failed to delete staff card." });
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Failed to delete staff list." });
     } finally {
       setDeletingId(null);
     }
@@ -121,7 +121,7 @@ export default function PicCardsPage() {
 
   return (
     <div className="space-y-6">
-      <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#184F8F]">Master Data</p><h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Staff List</h1><p className="mt-1 text-sm text-slate-500">Warehouse staff cards available for job scanning.</p></div>
+      <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#184F8F]">Master Data</p><h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Staff List</h1><p className="mt-1 text-sm text-slate-500">Warehouse staff list available for job scanning.</p></div>
       {message ? (
         <div className={`rounded-md border px-4 py-3 text-sm font-medium ${message.kind === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
           {message.text}
@@ -236,7 +236,7 @@ export default function PicCardsPage() {
               </div>
             </article>
           ))}
-          {!items.length && !error && !loading ? <p className="py-8 text-center text-sm text-slate-400">No staff cards found.</p> : null}
+          {!items.length && !error && !loading ? <p className="py-8 text-center text-sm text-slate-400">No staff list found.</p> : null}
           {loading ? <p className="py-8 text-center text-sm text-slate-400">Loading...</p> : null}
         </div>
         <div className="hidden overflow-x-auto md:block">
@@ -288,7 +288,7 @@ export default function PicCardsPage() {
               ))}
             </tbody>
           </table>
-          {!items.length && !error && !loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">No staff cards found.</p> : null}
+          {!items.length && !error && !loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">No staff list found.</p> : null}
           {loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">Loading...</p> : null}
         </div>
       </div>
@@ -297,7 +297,7 @@ export default function PicCardsPage() {
         isDestructive
         isLoading={deletingId === itemToDelete?.id}
         isOpen={Boolean(itemToDelete)}
-        message={itemToDelete ? `Delete staff card for "${itemToDelete.full_name}"?` : ""}
+        message={itemToDelete ? `Delete staff list for "${itemToDelete.full_name}"?` : ""}
         onClose={() => {
           if (!deletingId) {
             setItemToDelete(null);
