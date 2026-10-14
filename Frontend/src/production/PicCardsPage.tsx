@@ -121,7 +121,7 @@ export default function PicCardsPage() {
 
   return (
     <div className="space-y-6">
-      <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#184F8F]">Master Data</p><h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Staff Cards</h1><p className="mt-1 text-sm text-slate-500">Warehouse staff cards available for job scanning.</p></div>
+      <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#184F8F]">Master Data</p><h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Staff List</h1><p className="mt-1 text-sm text-slate-500">Warehouse staff cards available for job scanning.</p></div>
       {message ? (
         <div className={`rounded-md border px-4 py-3 text-sm font-medium ${message.kind === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
           {message.text}
@@ -230,7 +230,7 @@ export default function PicCardsPage() {
                   onClick={() => setItemToDelete(item)}
                   type="button"
                 >
-                  <TrashBinIcon className="h-5 w-5 shrink-0 fill-current" />
+                  <TrashBinIcon className="h-4 w-4 shrink-0 fill-current" />
                   {deletingId === item.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
@@ -266,7 +266,7 @@ export default function PicCardsPage() {
                   <td className="px-5 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button
-                        className="inline-flex size-10 items-center justify-center rounded-md border border-amber-200 text-amber-600 transition hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-amber-200 text-amber-600 transition hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10"
                         onClick={() => editCard(item)}
                         title="Update"
                         type="button"
@@ -274,13 +274,13 @@ export default function PicCardsPage() {
                         <PencilIcon className="h-4 w-4 fill-current" />
                       </button>
                     <button
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                       disabled={deletingId === item.id}
                       onClick={() => setItemToDelete(item)}
                       title="Delete"
                       type="button"
                     >
-                      <TrashBinIcon className="h-5 w-5 shrink-0 fill-current" />
+                      <TrashBinIcon className="h-4 w-4 shrink-0 fill-current" />
                     </button>
                     </div>
                   </td>
@@ -304,7 +304,7 @@ export default function PicCardsPage() {
           }
         }}
         onConfirm={() => void confirmDeleteCard()}
-        title="Delete Staff Card"
+        title="Delete Staff List"
       />
     </div>
   );
