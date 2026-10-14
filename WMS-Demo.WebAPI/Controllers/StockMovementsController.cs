@@ -174,10 +174,28 @@ public class StockMovementsController : ApiControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteMovement(int id)
     {
-        var movement = await _db.StockMovements.FirstOrDefaultAsync(x => x.Id == id);
+        var movement = await _db.StockMovements
+            .Include(x => x.Part)
+            .Include(x => x.LocationRef)
+            .FirstOrDefaultAsync(x => x.Id == id);
         if (movement is null)
         {
             return ApiNotFound("Stock movement was not found.");
+        }
+
+        if (movement.MovementType == StockMovementType.IN)
+        {
+            var hasStockOut = await _db.StockMovements.AnyAsync(x =>
+                x.MovementType == StockMovementType.OUT &&
+                x.PartId == movement.PartId &&
+                x.LocationId == movement.LocationId);
+
+            if (hasStockOut)
+            {
+                var partNumber = movement.Part?.PartNumber ?? "this part";
+                var location = movement.LocationRef?.LocationCode ?? "this location";
+                return ApiBadRequest($"Cannot delete stock in for {partNumber} at {location} because stock out already exists. Delete the related stock out records first.");
+            }
         }
 
         _db.StockMovements.Remove(movement);

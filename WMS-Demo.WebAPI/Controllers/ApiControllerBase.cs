@@ -58,6 +58,17 @@ public abstract class ApiControllerBase : ControllerBase
         });
     }
 
+    protected IActionResult ApiBadRequest(string message)
+    {
+        return BadRequest(new ApiResponse<string>
+        {
+            Success = false,
+            StatusCode = (int)HttpStatusCode.BadRequest,
+            Message = message,
+            Data = null
+        });
+    }
+
     protected IActionResult ApiUnauthorized(string message)
     {
         return Unauthorized(new ApiResponse<string>

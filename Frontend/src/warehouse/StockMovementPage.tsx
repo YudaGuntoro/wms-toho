@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { Modal } from "@/components/ui/modal";
+import { TrashBinIcon } from "@/icons";
 import StockMovementService, {
   StockMovement,
   StockMovementPayload,
@@ -349,6 +350,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [qrItem, setQrItem] = useState<StockMovement | null>(null);
   const [selectedQrIds, setSelectedQrIds] = useState<number[]>([]);
@@ -523,6 +525,31 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     }
   }
 
+  async function deleteMovement(item: StockMovement) {
+    const confirmed = window.confirm(
+      type === "IN"
+        ? `Delete stock in "${item.part_number}" at ${item.location}? If stock out already exists, delete will be rejected.`
+        : `Delete stock out "${item.part_number}" at ${item.location}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(item.id);
+    setMessage(null);
+    try {
+      await StockMovementService.deleteMovement(item.id);
+      setSelectedQrIds((current) => current.filter((id) => id !== item.id));
+      setMessage({ kind: "ok", text: `${title} deleted successfully.` });
+      await load();
+    } catch (error) {
+      setMessage({ kind: "error", text: error instanceof Error ? error.message : `Failed to delete ${title}.` });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -637,18 +664,29 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                   <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{formatDate(item.timestamp)}</p>
                 </div>
               </div>
-              {type === "IN" ? (
-                <button className="mt-3 h-10 w-full rounded-md border border-[#184F8F]/20 text-xs font-bold text-[#184F8F] hover:bg-[#184F8F]/5" onClick={() => setQrItem(item)} type="button">
-                  QR
+              <div className={`mt-3 grid gap-2 ${type === "IN" ? "grid-cols-2" : "grid-cols-1"}`}>
+                {type === "IN" ? (
+                  <button className="h-10 w-full rounded-md border border-[#184F8F]/20 text-xs font-bold text-[#184F8F] hover:bg-[#184F8F]/5" onClick={() => setQrItem(item)} type="button">
+                    QR
+                  </button>
+                ) : null}
+                <button
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-200 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                  disabled={deletingId === item.id}
+                  onClick={() => void deleteMovement(item)}
+                  type="button"
+                >
+                  <TrashBinIcon className="size-4 fill-current" />
+                  {deletingId === item.id ? "Deleting..." : "Delete"}
                 </button>
-              ) : null}
+              </div>
             </article>
           ))}
           {!loading && !items.length ? <p className="py-8 text-center text-sm text-slate-400">No {title.toLowerCase()} records found.</p> : null}
           {loading ? <p className="py-8 text-center text-sm text-slate-400">Loading...</p> : null}
         </div>
         <div className="hidden overflow-x-auto md:block">
-          <table className={`w-full text-left text-sm ${type === "IN" ? "min-w-[1040px]" : "min-w-[860px]"}`}>
+          <table className={`w-full text-left text-sm ${type === "IN" ? "min-w-[1120px]" : "min-w-[940px]"}`}>
             <thead className="bg-[#184F8F] text-xs uppercase text-white">
               <tr>
                 {type === "IN" ? (
@@ -668,7 +706,8 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                 {type === "OUT" ? <th className="px-4 py-3">Customer Name</th> : null}
                 <th className="px-4 py-3 text-right">Qty</th>
                 <th className={`${type === "OUT" ? "rounded-tr-md" : ""} px-5 py-3`}>TimeStamp</th>
-                {type === "IN" ? <th className="rounded-tr-md px-5 py-3 text-center">QR</th> : null}
+                {type === "IN" ? <th className="px-5 py-3 text-center">QR</th> : null}
+                <th className="rounded-tr-md px-5 py-3 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -698,6 +737,17 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                       </button>
                     </td>
                   ) : null}
+                  <td className="px-5 py-4 text-center">
+                    <button
+                      className="inline-flex size-9 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                      disabled={deletingId === item.id}
+                      onClick={() => void deleteMovement(item)}
+                      title="Delete"
+                      type="button"
+                    >
+                      <TrashBinIcon className="size-4 fill-current" />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
