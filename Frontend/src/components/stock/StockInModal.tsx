@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Modal } from "@/components/ui/modal";
-import StockInService, { StockIn } from "@/services/StockInService";
+import StockInService, { StockIn, StockInPart } from "@/services/StockInService";
 import { useToast } from "@/context/ToastContext";
 import { useParts } from "@/hooks/useParts";
 import { Part } from "@/services/PartService";
@@ -26,12 +26,20 @@ interface StockInModalProps {
 
 type PartSelectProps = {
   disabled?: boolean;
-  fallbackPart?: Pick<Part, "id" | "name" | "number"> | null;
+  fallbackPart?: StockInPart | null;
   isLoading?: boolean;
   onChange: (partId: number) => void;
   parts: Part[];
   value: number;
 };
+
+function getPartNumber(part: Part | StockInPart) {
+  return "part_number" in part ? part.part_number : part.number;
+}
+
+function getPartName(part: Part | StockInPart) {
+  return "part_name" in part ? part.part_name : part.name;
+}
 
 function PartSearchSelect({
   disabled = false,
@@ -50,13 +58,13 @@ function PartSearchSelect({
     parts.find((part) => part.id === value) ??
     (fallbackPart?.id === value ? fallbackPart : null);
   const selectedLabel = selectedPart
-    ? `${selectedPart.number} - ${selectedPart.name}`
+    ? `${getPartNumber(selectedPart)} - ${getPartName(selectedPart)}`
     : "";
   const normalizedSearch = search.trim().toLowerCase();
   const filteredParts = useMemo(() => {
     const matchedParts = normalizedSearch
       ? parts.filter((part) =>
-          `${part.number} ${part.name}`.toLowerCase().includes(normalizedSearch)
+          `${part.part_number} ${part.part_name}`.toLowerCase().includes(normalizedSearch)
         )
       : parts;
 
@@ -144,9 +152,9 @@ function PartSearchSelect({
                   onClick={() => handleSelect(part.id)}
                   type="button"
                 >
-                  <span className="font-medium">{part.number}</span>
+                  <span className="font-medium">{part.part_number}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    {part.name}
+                    {part.part_name}
                   </span>
                 </button>
               ))
