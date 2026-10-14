@@ -118,7 +118,7 @@ public static class ServiceRegistration
         });
 
         var connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? "Server=127.0.0.1;Port=3306;User ID=root;Password=root_native;Database=wms-system-toho;SslMode=None;AllowPublicKeyRetrieval=True;";
+            ?? "Server=127.0.0.1;Port=3306;User ID=yudaguntoro;Password=P@ssword123#;Database=wms-system-toho;SslMode=None;AllowPublicKeyRetrieval=True;";
         services.AddDbContext<WMSDemoDbContext>(options =>
         {
             options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 34)));
