@@ -8,9 +8,7 @@ import { hasValidAuthSession } from "./auth";
 export function AuthGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(() =>
-    typeof window === "undefined" ? null : hasValidAuthSession()
-  );
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     const nextPath = pathname || "/";
