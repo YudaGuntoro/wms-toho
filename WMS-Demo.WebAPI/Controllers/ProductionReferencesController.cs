@@ -107,6 +107,77 @@ public class ProductionReferencesController : ApiControllerBase
         return ApiCreated(created, "Staff card created successfully.");
     }
 
+    [HttpPut("pic-cards/{id:int}")]
+    public async Task<IActionResult> UpdatePicCard(int id, [FromBody] CreatePicCardRequest request)
+    {
+        var card = await _db.PicCards.FirstOrDefaultAsync(x => x.Id == id);
+        if (card is null)
+        {
+            return ApiNotFound("Staff card was not found.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CardUid) ||
+            string.IsNullOrWhiteSpace(request.EmployeeNo) ||
+            string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return ApiBadRequest("Card UID, employee number, and staff name are required.");
+        }
+
+        var cardUid = request.CardUid.Trim();
+        var employeeNo = request.EmployeeNo.Trim();
+        var fullName = request.FullName.Trim();
+        var department = string.IsNullOrWhiteSpace(request.Department)
+            ? "Warehouse"
+            : request.Department.Trim();
+
+        var shiftExists = await _db.ShiftMasters.AnyAsync(x => x.Id == request.ShiftId && x.IsActive);
+        if (!shiftExists)
+        {
+            return ApiBadRequest("Selected shift is not available.");
+        }
+
+        var duplicateCard = await _db.PicCards.AnyAsync(x => x.Id != id && x.CardUid == cardUid);
+        if (duplicateCard)
+        {
+            return ApiBadRequest("Card UID is already registered.");
+        }
+
+        var duplicateEmployee = await _db.PicCards.AnyAsync(x => x.Id != id && x.EmployeeNo == employeeNo);
+        if (duplicateEmployee)
+        {
+            return ApiBadRequest("Employee number is already registered.");
+        }
+
+        card.CardUid = cardUid;
+        card.EmployeeNo = employeeNo;
+        card.FullName = fullName;
+        card.Department = department;
+        card.ShiftId = request.ShiftId;
+        card.IsActive = request.IsActive;
+
+        await _db.SaveChangesAsync();
+
+        var updated = await _db.PicCards.AsNoTracking()
+            .Include(x => x.ShiftRef)
+            .Where(x => x.Id == card.Id)
+            .Select(x => new PicCard
+            {
+                Id = x.Id,
+                CardUid = x.CardUid,
+                EmployeeNo = x.EmployeeNo,
+                FullName = x.FullName,
+                Department = x.Department,
+                ShiftId = x.ShiftId,
+                Shift = x.ShiftRef!.ShiftName,
+                IsActive = x.IsActive,
+                LastScannedAt = x.LastScannedAt,
+                CreatedAt = x.CreatedAt
+            })
+            .FirstAsync();
+
+        return ApiOk(updated, "Staff card updated successfully.");
+    }
+
     [HttpDelete("pic-cards/{id:int}")]
     public async Task<IActionResult> DeletePicCard(int id)
     {

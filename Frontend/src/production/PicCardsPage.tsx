@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { TrashBinIcon } from "@/icons";
-import { apiDelete, apiGet, apiPost } from "@/lib/api";
+import { PencilIcon, TrashBinIcon } from "@/icons";
+import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import type { PicCard, PicCardPayload, ShiftMaster } from "./types";
 import { formatDateTime } from "./ui";
 
@@ -23,8 +23,21 @@ export default function PicCardsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<PicCard | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  function resetForm(defaultShiftId = shifts[0]?.id || 0) {
+    setEditingItem(null);
+    setForm({
+      card_uid: "",
+      employee_no: "",
+      full_name: "",
+      department: "Warehouse",
+      shift_id: defaultShiftId,
+      is_active: true,
+    });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,22 +69,33 @@ export default function PicCardsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      await apiPost<PicCard>("/api/production/pic-cards", form);
-      setMessage({ kind: "ok", text: "Staff card added successfully." });
-      setForm({
-        card_uid: "",
-        employee_no: "",
-        full_name: "",
-        department: "Warehouse",
-        shift_id: shifts[0]?.id || 0,
-        is_active: true,
-      });
+      if (editingItem) {
+        await apiPut<PicCard>(`/api/production/pic-cards/${editingItem.id}`, form);
+        setMessage({ kind: "ok", text: "Staff card updated successfully." });
+      } else {
+        await apiPost<PicCard>("/api/production/pic-cards", form);
+        setMessage({ kind: "ok", text: "Staff card added successfully." });
+      }
+      resetForm();
       await load();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Failed to add staff card." });
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : `Failed to ${editingItem ? "update" : "add"} staff card.` });
     } finally {
       setSaving(false);
     }
+  }
+
+  function editCard(item: PicCard) {
+    setEditingItem(item);
+    setMessage(null);
+    setForm({
+      card_uid: item.card_uid,
+      employee_no: item.employee_no,
+      full_name: item.full_name,
+      department: item.department,
+      shift_id: item.shift_id,
+      is_active: item.is_active,
+    });
   }
 
   async function deleteCard(item: PicCard) {
@@ -102,7 +126,7 @@ export default function PicCardsPage() {
       ) : null}
       {error ? <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
 
-      <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.3fr_1fr_1fr_auto_auto]" onSubmit={(event) => void submit(event)}>
+      <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.3fr_1fr_1fr_auto_auto_auto]" onSubmit={(event) => void submit(event)}>
         <input
           className={inputClass}
           onChange={(event) => setForm((current) => ({ ...current, card_uid: event.target.value }))}
@@ -152,8 +176,17 @@ export default function PicCardsPage() {
           Active
         </label>
         <button className="h-11 rounded-md bg-[#184F8F] px-5 text-sm font-bold text-white transition hover:bg-[#123D70] disabled:bg-[#0F335C] disabled:opacity-80" disabled={saving || !form.shift_id} type="submit">
-          {saving ? "Saving..." : "Add"}
+          {saving ? "Saving..." : editingItem ? "Update" : "Add"}
         </button>
+        {editingItem ? (
+          <button
+            className="h-11 rounded-md border border-slate-200 px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            onClick={() => resetForm()}
+            type="button"
+          >
+            Cancel
+          </button>
+        ) : null}
       </form>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -179,15 +212,25 @@ export default function PicCardsPage() {
                   <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{formatDateTime(item.last_scanned_at)}</p>
                 </div>
               </div>
-              <button
-                className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-200 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
-                disabled={deletingId === item.id}
-                onClick={() => void deleteCard(item)}
-                type="button"
-              >
-                <TrashBinIcon className="size-4 fill-current" />
-                {deletingId === item.id ? "Deleting..." : "Delete"}
-              </button>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-amber-200 text-xs font-bold text-amber-600 transition hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                  onClick={() => editCard(item)}
+                  type="button"
+                >
+                  <PencilIcon className="size-4 fill-current" />
+                  Update
+                </button>
+                <button
+                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-200 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                  disabled={deletingId === item.id}
+                  onClick={() => void deleteCard(item)}
+                  type="button"
+                >
+                  <TrashBinIcon className="size-4 fill-current" />
+                  {deletingId === item.id ? "Deleting..." : "Delete"}
+                </button>
+              </div>
             </article>
           ))}
           {!items.length && !error && !loading ? <p className="py-8 text-center text-sm text-slate-400">No staff cards found.</p> : null}
@@ -218,15 +261,25 @@ export default function PicCardsPage() {
                     </span>
                   </td>
                   <td className="px-5 py-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        className="inline-flex size-10 items-center justify-center rounded-md border border-amber-200 text-amber-600 transition hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                        onClick={() => editCard(item)}
+                        title="Update"
+                        type="button"
+                      >
+                        <PencilIcon className="h-4 w-4 fill-current" />
+                      </button>
                     <button
-                      className="inline-flex size-9 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                      className="inline-flex size-10 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                       disabled={deletingId === item.id}
                       onClick={() => void deleteCard(item)}
                       title="Delete"
                       type="button"
                     >
-                      <TrashBinIcon className="size-4 fill-current" />
+                      <TrashBinIcon className="h-4 w-4 fill-current" />
                     </button>
+                    </div>
                   </td>
                 </tr>
               ))}
