@@ -7,14 +7,14 @@ import { ToastProvider } from '@/context/ToastContext';
 
 export const metadata: Metadata = {
   title: {
-    default: "Production Control Monitoring System",
-    template: "%s | Production Control Monitoring System",
+    default: "WMS-Toho Warehouse Management System",
+    template: "%s | WMS-Toho",
   },
-  description: "Production Control Monitoring System for PT YKK AP Indonesia",
+  description: "Warehouse Management System for WMS-Toho",
   icons: {
-    apple: "/icon.png?v=ykk-ap",
-    icon: "/icon.png?v=ykk-ap",
-    shortcut: "/favicon.ico?v=ykk-ap",
+    apple: "/icon.png?v=wms-toho-logo",
+    icon: "/icon.png?v=wms-toho-logo",
+    shortcut: "/favicon.ico?v=wms-toho-logo",
   },
 };
 

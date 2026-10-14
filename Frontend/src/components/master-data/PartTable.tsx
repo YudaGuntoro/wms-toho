@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Badge from "@/components/ui/badge/Badge";
 import CreateButton from "@/components/common/CreateButton";
 import DataTable, { DataTableColumn } from "@/components/common/DataTable";
 import { useParts } from "@/hooks/useParts";
@@ -34,32 +33,23 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 
 const baseColumns: DataTableColumn<Part>[] = [
   {
-    key: "number",
-    header: "Number",
+    key: "part_number",
+    header: "Part / Lot Number",
     sortable: true,
   },
   {
-    key: "name",
-    header: "Name",
+    key: "part_name",
+    header: "Part Name",
     sortable: true,
   },
   {
-    key: "description",
-    header: "Description",
-    className: "min-w-72",
+    key: "location",
+    header: "Location",
+    sortable: true,
   },
   {
-    key: "isActive",
-    header: "Status",
-    render: (value) => (
-      <Badge color={value ? "success" : "error"} size="sm">
-        {value ? "Active" : "Inactive"}
-      </Badge>
-    ),
-  },
-  {
-    key: "createdAt",
-    header: "Created At",
+    key: "timestamp",
+    header: "TimeStamp",
     render: (value) => (typeof value === "string" ? formatDate(value) : "-"),
   },
 ];
@@ -80,7 +70,6 @@ export default function PartTable() {
     pagination,
     query,
     refetch,
-    setIsActive,
     setLimit,
     setPage,
     setSearch,
@@ -184,23 +173,6 @@ export default function PartTable() {
       <DataTable
         actions={
           <div className="flex items-center gap-3">
-            <select
-              className="h-10 rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm font-medium text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-              value={
-                query.isActive === undefined || query.isActive === null
-                  ? "all"
-                  : String(query.isActive)
-              }
-              onChange={(event) => {
-                const value = event.target.value;
-                setIsActive(value === "all" ? null : value === "true");
-              }}
-            >
-              <option value="all">All Status</option>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </select>
-
             <CreateButton onClick={handleCreate} />
           </div>
         }
@@ -209,13 +181,13 @@ export default function PartTable() {
         emptyMessage="No parts found"
         error={error}
         isLoading={isLoading}
-        minWidth="920px"
+        minWidth="760px"
         onLimitChange={setLimit}
         onPageChange={setPage}
         onSearchChange={setSearch}
         pagination={pagination}
         rowKey="id"
-        searchPlaceholder="Search parts"
+        searchPlaceholder="Search part / lot number, name, or location"
         searchValue={query.search}
       />
 
@@ -231,7 +203,7 @@ export default function PartTable() {
         onClose={closeDeleteModal}
         onConfirm={confirmDelete}
         title="Delete Part"
-        message={`Are you sure you want to delete part "${partToDelete?.name}"?`}
+        message={`Are you sure you want to delete part "${partToDelete?.part_name}"?`}
         confirmText="Delete"
         isDestructive={true}
         isLoading={isDeleting}

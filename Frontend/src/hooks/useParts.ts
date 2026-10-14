@@ -15,14 +15,12 @@ type PartQueryState = {
   page: number;
   limit: number;
   search: string;
-  isActive?: boolean | null;
 };
 
 const getInitialQuery = (options: UsePartsOptions): PartQueryState => ({
   page: options.page ?? 1,
   limit: options.limit ?? 10,
   search: options.search ?? "",
-  isActive: options.isActive,
 });
 
 export const useParts = (options: UsePartsOptions = {}) => {
@@ -40,9 +38,8 @@ export const useParts = (options: UsePartsOptions = {}) => {
       page: query.page,
       limit: query.limit,
       search: query.search,
-      isActive: query.isActive,
     }),
-    [query.isActive, query.limit, query.page, query.search]
+    [query.limit, query.page, query.search]
   );
 
   const startRequest = useCallback(() => {
@@ -82,18 +79,6 @@ export const useParts = (options: UsePartsOptions = {}) => {
         ...current,
         page: 1,
         search,
-      }));
-    },
-    [startRequest]
-  );
-
-  const setIsActive = useCallback(
-    (isActive?: boolean | null) => {
-      startRequest();
-      setQueryState((current) => ({
-        ...current,
-        isActive,
-        page: 1,
       }));
     },
     [startRequest]
@@ -159,7 +144,6 @@ export const useParts = (options: UsePartsOptions = {}) => {
     query,
     refetch,
     response,
-    setIsActive,
     setLimit,
     setPage,
     setQuery,

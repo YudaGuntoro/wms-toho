@@ -45,8 +45,8 @@
   --color-brand-200: #9ee6f8;
   --color-brand-300: #5fd3f1;
   --color-brand-400: #25b9e2;
-  --color-brand-500: #0799c9;
-  --color-brand-600: #087ea4;
+  --color-brand-500: #184F8F;
+  --color-brand-600: #123D70;
   --color-brand-700: #0b6685;
   --color-brand-800: #10546d;
   --color-brand-900: #11465c;
@@ -859,9 +859,9 @@ span.flatpickr-weekday,
   }
 }
 
-/* Production Control global contrast and table header polish */
+/* Warehouse Management global contrast and table header polish */
 :where(table thead, table thead tr, table thead th, table thead td) {
-  background-color: #0799c9 !important;
+  background-color: #184F8F !important;
   color: #ffffff !important;
 }
 

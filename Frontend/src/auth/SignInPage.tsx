@@ -23,8 +23,6 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [autofillLocked, setAutofillLocked] = useState(true);
-  const [fieldNonce, setFieldNonce] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,21 +31,6 @@ export default function SignInPage() {
       router.replace(nextPath);
     }
   }, [nextPath, router]);
-
-  useEffect(() => {
-    const clearAutofill = () => {
-      setUsername("");
-      setPassword("");
-      document.querySelectorAll<HTMLInputElement>("[data-login-field]").forEach((field) => {
-        field.value = "";
-      });
-    };
-
-    setFieldNonce(crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    clearAutofill();
-    const timers = [150, 600, 1200, 2400].map((delay) => window.setTimeout(clearAutofill, delay));
-    return () => timers.forEach(window.clearTimeout);
-  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,16 +65,22 @@ export default function SignInPage() {
 
         <div className="rounded-lg border border-gray-200 bg-white/95 p-6 shadow-theme-xl backdrop-blur dark:border-white/[0.08] dark:bg-gray-900/90 sm:p-8">
           <div className="mb-8">
-            <div className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#0799c9]">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-[#0799c9] text-xs font-black leading-none text-white shadow-theme-xs">
-                YKK
-                <br />
-                AP
+            <div className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-[#184F8F]">
+              <span className="flex size-9 overflow-hidden rounded-md bg-[#184F8F] shadow-theme-xs" aria-hidden="true">
+                <svg className="h-full w-full" viewBox="0 0 200 200">
+                  <rect width="200" height="200" fill="#1F5A94" />
+                  <ellipse cx="101" cy="50" rx="52" ry="14" fill="white" />
+                  <path
+                    d="M88 79C60 88 43 111 44 135C45 158 64 171 91 167C125 162 154 133 159 99C163 77 147 67 119 68V122L88 145V79Z"
+                    fill="white"
+                  />
+                  <path d="M88 79V145L119 122V68C106 70 96 74 88 79Z" fill="#1F5A94" />
+                </svg>
               </span>
-              Production Control
+              Warehouse Management
             </div>
             <h1 className="mb-3 text-title-sm font-bold text-gray-900 dark:text-white/90 sm:text-title-md">Sign in</h1>
-            <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">Sign in to access the Production Control Monitoring System.</p>
+            <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">Sign in to access the WMS-Toho warehouse operations workspace.</p>
           </div>
 
           {error ? (
@@ -100,7 +89,7 @@ export default function SignInPage() {
             </div>
           ) : null}
 
-          <form autoComplete="off" data-form-type="other" onSubmit={(event) => void submit(event)}>
+          <form autoComplete="on" onSubmit={(event) => void submit(event)}>
             <div className="space-y-6">
               <div>
                 <Label htmlFor={`production-user-${usernameFieldId}`}>
@@ -112,22 +101,16 @@ export default function SignInPage() {
                   </span>
                   <Input
                     autoCapitalize="none"
-                    autoComplete="new-password"
+                    autoComplete="username"
                     className="h-12 pl-12"
-                    data-1p-ignore="true"
-                    data-form-type="other"
-                    data-login-field="true"
-                    data-lpignore="true"
                     disabled={loading}
                     id={`production-user-${usernameFieldId}`}
                     inputMode="text"
-                    name={fieldNonce ? `production-operator-${fieldNonce}` : `production-operator-${usernameFieldId}`}
+                    name="username"
                     onChange={(event) => setUsername(event.target.value)}
-                    onFocus={() => setAutofillLocked(false)}
                     placeholder="Enter username"
-                    readOnly={autofillLocked}
                     spellCheck={false}
-                    type="search"
+                    type="text"
                     value={username}
                   />
                 </div>
@@ -142,19 +125,13 @@ export default function SignInPage() {
                     <LockIcon className="size-5 fill-current" />
                   </span>
                   <Input
-                    autoComplete="new-password"
+                    autoComplete="current-password"
                     className="h-12 pl-12 pr-12"
-                    data-1p-ignore="true"
-                    data-form-type="other"
-                    data-login-field="true"
-                    data-lpignore="true"
                     disabled={loading}
                     id={`production-secret-${passwordFieldId}`}
-                    name={fieldNonce ? `production-key-${fieldNonce}` : `production-key-${passwordFieldId}`}
+                    name="password"
                     onChange={(event) => setPassword(event.target.value)}
-                    onFocus={() => setAutofillLocked(false)}
                     placeholder="Enter password"
-                    readOnly={autofillLocked}
                     type={showPassword ? "text" : "password"}
                     value={password}
                   />
@@ -175,7 +152,7 @@ export default function SignInPage() {
               </div>
 
               <button
-                className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#0799c9] px-4 text-sm font-semibold text-white shadow-theme-md transition-colors hover:bg-[#087ea4] focus:outline-none focus:ring-3 focus:ring-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#184F8F] px-4 text-sm font-semibold text-white shadow-theme-md transition-colors hover:bg-[#123D70] focus:outline-none focus:ring-3 focus:ring-[#184F8F]/20 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={loading}
                 type="submit"
               >
@@ -185,7 +162,7 @@ export default function SignInPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-500">PT YKK AP Indonesia</p>
+        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-500">WMS-Toho</p>
       </div>
     </div>
   );

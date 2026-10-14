@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import ProductionDashboard from "@/production/ProductionDashboard";
 
 export const metadata: Metadata = {
-  title: "Production Control Monitoring System | PT YKK AP Indonesia",
-  description: "Production control and work order monitoring dashboard",
+  title: "WMS-Toho Warehouse Management System",
+  description: "Warehouse inventory, picking, and operation monitoring dashboard",
 };
 
-export default function ProductionControlHome() {
+export default function WMSDemoHome() {
   return <ProductionDashboard />;
 }

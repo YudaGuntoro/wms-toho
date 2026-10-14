@@ -271,7 +271,52 @@ export default function DataTable<T extends object>({
         </div>
       )}
 
-      <div className="mx-4 mb-4 mt-2 rounded-lg overflow-hidden border border-gray-100 dark:border-white/[0.05]">
+      <div className="space-y-3 p-4 md:hidden">
+        {isLoading &&
+          Array.from({ length: Math.min(currentLimit, 4) }).map((_, index) => (
+            <div className="rounded-lg border border-gray-100 p-4 dark:border-white/[0.05]" key={`mobile-loading-${index}`}>
+              <div className="h-4 w-2/3 animate-pulse rounded bg-gray-100 dark:bg-white/[0.05]" />
+              <div className="mt-3 h-3 w-full animate-pulse rounded bg-gray-100 dark:bg-white/[0.05]" />
+              <div className="mt-2 h-3 w-4/5 animate-pulse rounded bg-gray-100 dark:bg-white/[0.05]" />
+            </div>
+          ))}
+
+        {!isLoading && error ? (
+          <p className="rounded-lg border border-error-100 bg-error-50 px-4 py-6 text-center text-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-400">
+            {error}
+          </p>
+        ) : null}
+
+        {!isLoading && !error && data.length === 0 ? (
+          <p className="rounded-lg border border-gray-100 px-4 py-8 text-center text-sm text-gray-500 dark:border-white/[0.05] dark:text-gray-400">
+            {emptyMessage}
+          </p>
+        ) : null}
+
+        {!isLoading &&
+          !error &&
+          data.map((row, index) => (
+            <article className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm dark:border-white/[0.05] dark:bg-white/[0.03]" key={getRowKey(row, index, rowKey)}>
+              {columns.map((column) => {
+                const value = getColumnValue(row, column);
+                const renderedValue = column.render
+                  ? column.render(value, row, index)
+                  : formatCellValue(value);
+
+                return (
+                  <div className={`border-b border-gray-100 py-2 last:border-b-0 dark:border-white/[0.05] ${column.key === "action" ? "flex items-center justify-between gap-3" : ""}`} key={column.key}>
+                    <p className="text-xs font-bold uppercase text-gray-400">{column.header}</p>
+                    <div className={`mt-1 text-sm text-gray-700 dark:text-gray-300 ${column.key === "action" ? "mt-0" : ""}`}>
+                      {renderedValue}
+                    </div>
+                  </div>
+                );
+              })}
+            </article>
+          ))}
+      </div>
+
+      <div className="mx-4 mb-4 mt-2 hidden overflow-hidden rounded-lg border border-gray-100 dark:border-white/[0.05] md:block">
         <div className="max-w-full overflow-x-auto">
         <div style={{ minWidth }}>
           <Table>

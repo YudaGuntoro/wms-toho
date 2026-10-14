@@ -1,3 +1,5 @@
+import { clearAuthSession, getStoredToken, redirectToSignIn } from "@/lib/auth";
+
 export type QueryParamValue =
   | string
   | number
@@ -34,32 +36,8 @@ export class ApiError<T = unknown> extends Error {
   }
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5242";
 const DEFAULT_TIMEOUT = 30000;
-const AUTH_COOKIE_NAMES = ["token", "accessToken", "authToken"];
-
-const getCookie = (name: string) => {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const cookie = document.cookie
-    .split("; ")
-    .find((item) => item.startsWith(`${name}=`));
-
-  return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
-};
-
-const getAuthToken = () => {
-  for (const cookieName of AUTH_COOKIE_NAMES) {
-    const token = getCookie(cookieName);
-    if (token) {
-      return token;
-    }
-  }
-
-  return null;
-};
 
 const buildQueryString = (params?: QueryParams) => {
   if (!params) {
@@ -101,7 +79,7 @@ const isFormData = (body: unknown): body is FormData =>
 
 const createHeaders = (body: ApiRequestOptions["body"], headers?: HeadersInit) => {
   const requestHeaders = new Headers(headers);
-  const token = getAuthToken();
+  const token = getStoredToken();
 
   if (body !== undefined && body !== null && !isFormData(body)) {
     requestHeaders.set("Content-Type", "application/json");
@@ -151,13 +129,20 @@ const request = async <T>(
         body === undefined || body === null || isFormData(body)
           ? (body as BodyInit | null | undefined)
           : JSON.stringify(body),
-      credentials: fetchOptions.credentials ?? "include",
+      credentials: fetchOptions.credentials ?? "same-origin",
       headers: createHeaders(body, fetchOptions.headers),
       signal: controller.signal,
     });
     const data = await parseResponse<T>(response);
 
     if (!response.ok) {
+      if (response.status === 401) {
+        clearAuthSession();
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/signin")) {
+          redirectToSignIn();
+        }
+      }
+
       const message =
         typeof data === "object" &&
         data !== null &&

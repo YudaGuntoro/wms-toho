@@ -16,30 +16,28 @@ export type ApiListResponse<T> = {
 
 export type Part = {
   id: number;
-  number: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  createdAt: string;
+  part_number: string;
+  part_name: string;
+  location_id: number;
+  location: string;
+  timestamp: string;
 };
 
 export type PartPayload = Pick<
   Part,
-  "number" | "name" | "description" | "isActive"
+  "part_number" | "part_name" | "location" | "timestamp"
 >;
 
 export type PartQuery = {
   page?: number;
   limit?: number;
   search?: string;
-  isActive?: boolean | null;
 };
 
 const normalizeQuery = (query: PartQuery) => ({
   page: query.page,
   limit: query.limit,
   search: query.search,
-  isActive: query.isActive ?? undefined,
 });
 
 const PartService = {

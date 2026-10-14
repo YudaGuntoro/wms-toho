@@ -20,48 +20,27 @@ export default function YkkBrand({
   return (
     <div className={`flex items-center ${gapSize}`}>
       <div
-        className={`flex shrink-0 items-center justify-center rounded-2xl ${
-          inverted ? "bg-white/15 ring-1 ring-white/25" : "bg-[#0799c9]"
+        className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg ${
+          inverted ? "bg-white/15 ring-1 ring-white/25" : "bg-[#184F8F]"
         } ${markSize}`}
-        aria-label="YKK AP"
+        aria-label="Toho logo"
       >
-        <svg
-          className="h-[78%] w-[78%] translate-y-[1px]"
-          viewBox="0 0 64 64"
-          role="img"
-        >
-          <text
-            x="32"
-            y="24"
+        <svg className="h-full w-full" viewBox="0 0 200 200" role="img">
+          <rect width="200" height="200" fill="#1F5A94" />
+          <ellipse cx="101" cy="50" rx="52" ry="14" fill="white" />
+          <path
+            d="M88 79C60 88 43 111 44 135C45 158 64 171 91 167C125 162 154 133 159 99C163 77 147 67 119 68V122L88 145V79Z"
             fill="white"
-            fontFamily="Arial Black, Arial, sans-serif"
-            fontSize="17"
-            fontWeight="900"
-            letterSpacing="-1.4"
-            textAnchor="middle"
-          >
-            YKK
-          </text>
-          <text
-            x="32"
-            y="47"
-            fill="white"
-            fontFamily="Arial Black, Arial, sans-serif"
-            fontSize="24"
-            fontWeight="900"
-            letterSpacing="-1"
-            textAnchor="middle"
-          >
-            AP
-          </text>
+          />
+          <path d="M88 79V145L119 122V68C106 70 96 74 88 79Z" fill="#1F5A94" />
         </svg>
       </div>
       {showTitle ? (
         <div className="min-w-0">
-          <p className={`truncate font-extrabold leading-tight ${inverted ? "text-white" : "text-[#0799c9]"} ${titleSize}`}>
-            Production Control
+          <p className={`truncate font-extrabold leading-tight ${inverted ? "text-white" : "text-[#184F8F]"} ${titleSize}`}>
+            WMS-Toho
           </p>
-          <p className={`truncate font-medium ${inverted ? "text-white/75" : "text-slate-500"} ${subtitleSize}`}>PT YKK AP Indonesia</p>
+          <p className={`truncate font-medium ${inverted ? "text-white/75" : "text-slate-500"} ${subtitleSize}`}>Warehouse Management System</p>
         </div>
       ) : null}
     </div>

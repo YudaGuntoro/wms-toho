@@ -1,7 +1,6 @@
-# Production Control Monitoring System
+# WMS-Demo
 
-Basic production control system for **PT YKK AP Indonesia**, adapted from the
-Production Control domain.
+Basic warehouse management demo system for **PT YKK AP Indonesia**.
 
 ## Included modules
 
@@ -35,11 +34,11 @@ MySQL 8 is required. From the repository root, run:
 mysql -u root -p -e "source database/production_control_monitoring.sql"
 ```
 
-The script creates `db_production_control`, the login user, production tables,
+The script creates `wms-system-toho`, the login user, production tables,
 and starter records. The production-only migration is also available at:
 
 ```text
-ProductionControl/ProductionControl.Persistence/Migrations/20260707_001_production_control_monitoring.sql
+WMS-Demo/WMS-Demo.Persistence/Migrations/20260707_001_production_control_monitoring.sql
 ```
 
 ## Run locally
@@ -47,8 +46,8 @@ ProductionControl/ProductionControl.Persistence/Migrations/20260707_001_producti
 API:
 
 ```powershell
-$env:ConnectionStrings__DefaultConnection="Server=127.0.0.1;Port=3306;User ID=root;Password=YOUR_PASSWORD;Database=db_production_control;SslMode=None;AllowPublicKeyRetrieval=True;"
-dotnet run --project ProductionControl.WebAPI\ProductionControl.WebAPI.csproj
+$env:ConnectionStrings__DefaultConnection="Server=127.0.0.1;Port=3306;User ID=root;Password=YOUR_PASSWORD;Database=wms-system-toho;SslMode=None;AllowPublicKeyRetrieval=True;"
+dotnet run --project WMS-Demo.WebAPI\WMS-Demo.WebAPI.csproj
 ```
 
 Frontend, in another terminal:

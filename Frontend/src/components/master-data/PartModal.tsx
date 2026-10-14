@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import DatePicker from "@/components/form/date-picker";
 import { Modal } from "@/components/ui/modal";
 import PartService, { Part, PartPayload } from "@/services/PartService";
 import { useToast } from "@/context/ToastContext";
@@ -12,12 +13,18 @@ interface PartModalProps {
   part: Part | null;
 }
 
-const initialFormData: PartPayload = {
-  number: "",
-  name: "",
-  description: "",
-  isActive: true,
+const currentLocalDateTime = () => {
+  const date = new Date();
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
 };
+
+const emptyFormData = (): PartPayload => ({
+  part_number: "",
+  part_name: "",
+  location: "",
+  timestamp: currentLocalDateTime(),
+});
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -30,7 +37,7 @@ export default function PartModal({
 }: PartModalProps) {
   const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<PartPayload>(initialFormData);
+  const [formData, setFormData] = useState<PartPayload>(() => emptyFormData());
 
   useEffect(() => {
     if (!isOpen) {
@@ -39,15 +46,15 @@ export default function PartModal({
 
     if (part) {
       setFormData({
-        number: part.number || "",
-        name: part.name || "",
-        description: part.description || "",
-        isActive: part.isActive ?? true,
+        part_number: part.part_number || "",
+        part_name: part.part_name || "",
+        location: part.location || "",
+        timestamp: part.timestamp ? part.timestamp.slice(0, 16) : currentLocalDateTime(),
       });
       return;
     }
 
-    setFormData(initialFormData);
+    setFormData(emptyFormData());
   }, [isOpen, part]);
 
   const handleChange = (
@@ -55,12 +62,11 @@ export default function PartModal({
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, type, value } = event.target;
-    const checked = (event.target as HTMLInputElement).checked;
+    const { name, value } = event.target;
 
     setFormData((current) => ({
       ...current,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   };
 
@@ -107,27 +113,27 @@ export default function PartModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Number
+            Part / Lot Number
           </label>
           <input
             type="text"
-            name="number"
-            value={formData.number}
+            name="part_number"
+            value={formData.part_number}
             onChange={handleChange}
             required
             className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-            placeholder="Enter part number"
+            placeholder="Enter part / lot number"
           />
         </div>
 
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Name
+            Part Name
           </label>
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="part_name"
+            value={formData.part_name}
             onChange={handleChange}
             required
             className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
@@ -137,34 +143,42 @@ export default function PartModal({
 
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Description
+            Location
           </label>
-          <textarea
-            name="description"
-            value={formData.description}
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
             onChange={handleChange}
-            rows={3}
-            className="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-            placeholder="Enter part description"
+            required
+            className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+            placeholder="Enter location"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="part-is-active"
-            name="isActive"
-            checked={formData.isActive}
-            onChange={handleChange}
-            className="h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
-          />
-          <label
-            htmlFor="part-is-active"
-            className="text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Active
-          </label>
-        </div>
+        <DatePicker
+          key={formData.timestamp}
+          altFormat="d / m / Y, H : i"
+          altInput
+          dateFormat="Y-m-d H:i"
+          defaultDate={formData.timestamp}
+          enableTime
+          id="part-timestamp"
+          label="TimeStamp"
+          name="timestamp"
+          onChange={([date]) => {
+            if (date) {
+              const localDate = new Date(date);
+              localDate.setMinutes(localDate.getMinutes() - localDate.getTimezoneOffset());
+              setFormData((current) => ({
+                ...current,
+                timestamp: localDate.toISOString().slice(0, 16),
+              }));
+            }
+          }}
+          placeholder="Select timestamp"
+          required
+        />
 
         <div className="mt-4 flex justify-end gap-3">
           <button

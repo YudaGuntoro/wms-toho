@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import Link from "next/link";
 import React from "react";
 
-const productName = "Production Control Monitoring System";
+const productName = "WMS-Toho Warehouse Management System";
 
 export default function AuthLayout({
   children,
@@ -19,8 +19,8 @@ export default function AuthLayout({
         <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-[linear-gradient(135deg,#ffffff_0%,#f4fcff_45%,#e9f8fd_100%)] dark:bg-[linear-gradient(135deg,#07151b_0%,#0a222c_55%,#08384b_100%)] lg:flex-row">
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(7,153,201,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(7,153,201,0.05)_1px,transparent_1px)] bg-[size:56px_56px] dark:opacity-30" />
           {children}
-          <div className="relative hidden min-h-screen w-full items-center overflow-hidden bg-[#0799c9] lg:grid lg:w-1/2">
-            <div className="absolute inset-0 bg-[linear-gradient(145deg,#08a7d9_0%,#0799c9_50%,#087ea4_100%)]" />
+          <div className="relative hidden min-h-screen w-full items-center overflow-hidden bg-[#184F8F] lg:grid lg:w-1/2">
+            <div className="absolute inset-0 bg-[linear-gradient(145deg,#2B6CAD_0%,#184F8F_50%,#123D70_100%)]" />
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.09)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-[size:64px_64px] opacity-40" />
             <div className="absolute -right-24 top-20 h-48 w-72 rotate-12 rounded-lg border border-white/15 bg-white/[0.06]" />
             <div className="absolute bottom-24 -left-16 h-40 w-60 -rotate-12 rounded-lg border border-white/15 bg-white/[0.05]" />

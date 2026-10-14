@@ -29,6 +29,7 @@ deploy/*.env
 .idea/
 
 # Local verification/output files
+.build-check/
 .verify-*/
 **/.verify-*/
 **/verify-bin/

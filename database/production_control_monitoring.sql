@@ -1,11 +1,11 @@
--- Fresh database bootstrap for Production Control Monitoring System
+-- Fresh database bootstrap for WMS-Demo
 -- PT YKK AP Indonesia / MySQL 8
 
-CREATE DATABASE IF NOT EXISTS db_production_control
+CREATE DATABASE IF NOT EXISTS `wms-system-toho`
     CHARACTER SET utf8mb4
     COLLATE utf8mb4_unicode_ci;
 
-USE db_production_control;
+USE `wms-system-toho`;
 
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -28,9 +28,12 @@ CREATE TABLE IF NOT EXISTS users (
 INSERT IGNORE INTO users
     (id, username, full_name, email, role, status, password_hash, password_salt)
 VALUES
-    (1, 'admin', 'Production Control Administrator', 'admin@ykkap.local', 'ADMIN', 'ACTIVE',
+    (1, 'admin', 'WMS-Toho Administrator', 'admin@wms-toho.local', 'ADMIN', 'ACTIVE',
      'mV/QhZOhh7mvmWj0P1RgeXm3hZB1AkKHY5jfEcrC7PE=', 'Y21tcy1hZG1pbi1zYWx0LXYx');
 
-SOURCE ProductionControl/ProductionControl.Persistence/Migrations/20260707_001_production_control_monitoring.sql;
-SOURCE ProductionControl/ProductionControl.Persistence/Migrations/20260707_002_production_work_order_operators.sql;
-SOURCE ProductionControl/ProductionControl.Persistence/Migrations/20260708_001_shift_master_and_no_target.sql;
+SOURCE database/locations.sql;
+SOURCE database/parts.sql;
+SOURCE database/stock_movements.sql;
+SOURCE WMS-Demo/WMS-Demo.Persistence/Migrations/20260708_001_shift_master_and_no_target.sql;
+SOURCE database/normalize_shift_relations.sql;
+SOURCE database/drop_unused_production_tables.sql;
