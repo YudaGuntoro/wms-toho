@@ -227,7 +227,7 @@ export default function PicCardsPage() {
                   onClick={() => void deleteCard(item)}
                   type="button"
                 >
-                  <TrashBinIcon className="size-4 fill-current" />
+                  <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
                   {deletingId === item.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
@@ -271,13 +271,13 @@ export default function PicCardsPage() {
                         <PencilIcon className="h-4 w-4 fill-current" />
                       </button>
                     <button
-                      className="inline-flex size-10 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                       disabled={deletingId === item.id}
                       onClick={() => void deleteCard(item)}
                       title="Delete"
                       type="button"
                     >
-                      <TrashBinIcon className="h-4 w-4 fill-current" />
+                      <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
                     </button>
                     </div>
                   </td>

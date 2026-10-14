@@ -676,7 +676,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                   onClick={() => void deleteMovement(item)}
                   type="button"
                 >
-                  <TrashBinIcon className="size-4 fill-current" />
+                  <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
                   {deletingId === item.id ? "Deleting..." : "Delete"}
                 </button>
               </div>
@@ -739,13 +739,13 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                   ) : null}
                   <td className="px-5 py-4 text-center">
                     <button
-                      className="inline-flex size-9 items-center justify-center rounded-md border border-rose-200 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
                       disabled={deletingId === item.id}
                       onClick={() => void deleteMovement(item)}
                       title="Delete"
                       type="button"
                     >
-                      <TrashBinIcon className="size-4 fill-current" />
+                      <TrashBinIcon className="h-3.5 w-3.5 shrink-0 fill-current" />
                     </button>
                   </td>
                 </tr>
