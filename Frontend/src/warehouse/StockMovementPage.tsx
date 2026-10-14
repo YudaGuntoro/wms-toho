@@ -736,13 +736,13 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                   ) : null}
                   <td className="px-5 py-4 text-center">
                     <button
-                      className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-rose-200 p-0 text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                      className="inline-flex items-center justify-center rounded-md p-1 text-rose-500 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-400 dark:hover:text-rose-300"
                       disabled={deletingId === item.id}
                       onClick={() => setItemToDelete(item)}
                       title="Delete"
                       type="button"
                     >
-                      <TrashBinIcon className="h-5 w-5 shrink-0 fill-current" />
+                      <TrashBinIcon className="h-4 w-4 shrink-0 fill-current" />
                     </button>
                   </td>
                 </tr>

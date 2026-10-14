@@ -188,22 +188,22 @@ export default function ProcessTable() {
         header: "Action",
         align: "center",
         render: (_, row) => (
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => handleUpdate(row)}
-              className="text-warning-500 transition-colors hover:text-warning-600 dark:text-warning-400 dark:hover:text-warning-500"
+              className="inline-flex items-center justify-center rounded-md p-1 text-orange-500 transition-colors hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300"
               title="Edit"
               type="button"
             >
-              <PencilIcon className="h-5 w-5 fill-current" />
+              <PencilIcon className="h-4 w-4 fill-current" />
             </button>
             <button
               onClick={() => handleDeleteClick(row)}
-              className="text-error-500 transition-colors hover:text-error-600 dark:text-error-400 dark:hover:text-error-500"
+              className="inline-flex items-center justify-center rounded-md p-1 text-rose-500 transition-colors hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300"
               title="Delete"
               type="button"
             >
-              <TrashBinIcon className="h-5 w-5 fill-current" />
+              <TrashBinIcon className="h-4 w-4 fill-current" />
             </button>
           </div>
         ),
