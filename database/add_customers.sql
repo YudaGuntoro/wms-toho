@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 ALTER TABLE stock_movements
-    ADD COLUMN IF NOT EXISTS customer_id INT NULL,
+    ADD COLUMN customer_id INT NULL,
     ADD KEY ix_stock_movements_customer_id (customer_id),
     ADD CONSTRAINT fk_stock_movements_customer
         FOREIGN KEY (customer_id) REFERENCES customers (id)
