@@ -1,44 +1,28 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ConfirmModal } from "@/components/ui/modal/ConfirmModal";
 import RowActions from "@/components/common/RowActions";
-import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
-import type { PicCard, PicCardPayload, ShiftMaster } from "./types";
+import CreateButton from "@/components/common/CreateButton";
+import { apiDelete, apiGet } from "@/lib/api";
+import type { PicCard, ShiftMaster } from "./types";
 import { formatDateTime } from "./ui";
-
-const inputClass =
-  "h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none focus:border-[#184F8F] focus:ring-2 focus:ring-[#184F8F]/10 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-50 dark:placeholder:text-slate-300";
+import PicCardModal from "./PicCardModal";
 
 export default function PicCardsPage() {
   const [items, setItems] = useState<PicCard[]>([]);
   const [shifts, setShifts] = useState<ShiftMaster[]>([]);
-  const [form, setForm] = useState<PicCardPayload>({
-    card_uid: "",
-    employee_no: "",
-    full_name: "",
-    department: "Warehouse",
-    shift_id: 0,
-    is_active: true,
-  });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<PicCard | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<PicCard | null>(null);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  function resetForm(defaultShiftId = shifts[0]?.id || 0) {
+  function closeModal() {
     setEditingItem(null);
-    setForm({
-      card_uid: "",
-      employee_no: "",
-      full_name: "",
-      department: "Warehouse",
-      shift_id: defaultShiftId,
-      is_active: true,
-    });
+    setIsModalOpen(false);
   }
 
   const load = useCallback(async () => {
@@ -51,10 +35,6 @@ export default function PicCardsPage() {
       ]);
       setItems(cardsResult);
       setShifts(shiftsResult);
-      setForm((current) => ({
-        ...current,
-        shift_id: current.shift_id || shiftsResult[0]?.id || 0,
-      }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load data.");
     } finally {
@@ -66,38 +46,10 @@ export default function PicCardsPage() {
     void load();
   }, [load]);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setMessage(null);
-    try {
-      if (editingItem) {
-        await apiPut<PicCard>(`/api/production/pic-cards/${editingItem.id}`, form);
-        setMessage({ kind: "ok", text: "Staff card updated successfully." });
-      } else {
-        await apiPost<PicCard>("/api/production/pic-cards", form);
-        setMessage({ kind: "ok", text: "Staff card added successfully." });
-      }
-      resetForm();
-      await load();
-    } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : `Failed to ${editingItem ? "update" : "add"} staff list.` });
-    } finally {
-      setSaving(false);
-    }
-  }
-
   function editCard(item: PicCard) {
     setEditingItem(item);
     setMessage(null);
-    setForm({
-      card_uid: item.card_uid,
-      employee_no: item.employee_no,
-      full_name: item.full_name,
-      department: item.department,
-      shift_id: item.shift_id,
-      is_active: item.is_active,
-    });
+    setIsModalOpen(true);
   }
 
   async function confirmDeleteCard() {
@@ -109,7 +61,7 @@ export default function PicCardsPage() {
     setMessage(null);
     try {
       await apiDelete<boolean>(`/api/production/pic-cards/${itemToDelete.id}`);
-      setMessage({ kind: "ok", text: "Staff card deleted successfully." });
+      setMessage({ kind: "ok", text: "Staff list deleted successfully." });
       setItemToDelete(null);
       await load();
     } catch (err) {
@@ -128,69 +80,11 @@ export default function PicCardsPage() {
         </div>
       ) : null}
       {error ? <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
-
-      <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1.3fr_1fr_1fr_auto_auto_auto]" onSubmit={(event) => void submit(event)}>
-        <input
-          className={inputClass}
-          onChange={(event) => setForm((current) => ({ ...current, card_uid: event.target.value }))}
-          placeholder="Card UID"
-          required
-          value={form.card_uid}
-        />
-        <input
-          className={inputClass}
-          onChange={(event) => setForm((current) => ({ ...current, employee_no: event.target.value }))}
-          placeholder="Employee No"
-          required
-          value={form.employee_no}
-        />
-        <input
-          className={inputClass}
-          onChange={(event) => setForm((current) => ({ ...current, full_name: event.target.value }))}
-          placeholder="Staff Name"
-          required
-          value={form.full_name}
-        />
-        <input
-          className={inputClass}
-          onChange={(event) => setForm((current) => ({ ...current, department: event.target.value }))}
-          placeholder="Department"
-          required
-          value={form.department}
-        />
-        <select
-          className={inputClass}
-          onChange={(event) => setForm((current) => ({ ...current, shift_id: Number(event.target.value) }))}
-          required
-          value={form.shift_id}
-        >
-          <option value={0} disabled>Select Shift</option>
-          {shifts.map((shift) => (
-            <option key={shift.id} value={shift.id}>{shift.shift_name}</option>
-          ))}
-        </select>
-        <label className="flex h-11 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-bold text-slate-700 dark:border-slate-600 dark:text-slate-200">
-          <input
-            checked={form.is_active}
-            className="size-4 rounded border-slate-300 accent-[#184F8F]"
-            onChange={(event) => setForm((current) => ({ ...current, is_active: event.target.checked }))}
-            type="checkbox"
-          />
-          Active
-        </label>
-        <button className="h-11 rounded-md bg-[#184F8F] px-5 text-sm font-bold text-white transition hover:bg-[#123D70] disabled:bg-[#0F335C] disabled:opacity-80" disabled={saving || !form.shift_id} type="submit">
-          {saving ? "Saving..." : editingItem ? "Update" : "Add"}
-        </button>
-        {editingItem ? (
-          <button
-            className="h-11 rounded-md border border-slate-200 px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-            onClick={() => resetForm()}
-            type="button"
-          >
-            Cancel
-          </button>
-        ) : null}
-      </form>
+      <div className="flex justify-end rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <CreateButton onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
+          Create
+        </CreateButton>
+      </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="space-y-3 p-4 md:hidden">
@@ -279,6 +173,13 @@ export default function PicCardsPage() {
         }}
         onConfirm={() => void confirmDeleteCard()}
         title="Delete Staff List"
+      />
+      <PicCardModal
+        card={editingItem}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onSuccess={() => void load()}
+        shifts={shifts}
       />
     </div>
   );
