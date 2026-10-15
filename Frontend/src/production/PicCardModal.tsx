@@ -80,15 +80,15 @@ export default function PicCardModal({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[560px] p-6">
-      <h3 className="mb-1 text-xl font-semibold text-gray-800 dark:text-white/90">
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-[560px] p-6 sm:p-7">
+      <h3 className="mb-1 pr-12 text-xl font-semibold text-gray-800 dark:text-white/90">
         {card ? "Update Staff List" : "Create Staff List"}
       </h3>
       <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
         {card ? "Update staff information and access status." : "Add a staff member for warehouse job scanning."}
       </p>
 
-      <form className="grid gap-4 sm:grid-cols-2" onSubmit={(event) => void handleSubmit(event)}>
+      <form className="grid gap-x-4 gap-y-5 sm:grid-cols-2" onSubmit={(event) => void handleSubmit(event)}>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Card UID</label>
           <input className={inputClass} name="card_uid" onChange={(event) => setForm((current) => ({ ...current, card_uid: event.target.value }))} placeholder="Enter card UID" required value={form.card_uid} />
@@ -116,7 +116,7 @@ export default function PicCardModal({
           <input checked={form.is_active} className="size-4 rounded border-gray-300 accent-[#184F8F]" onChange={(event) => setForm((current) => ({ ...current, is_active: event.target.checked }))} type="checkbox" />
           Active
         </label>
-        <div className="mt-2 flex justify-end gap-3 sm:col-span-2">
+        <div className="mt-1 flex justify-end gap-3 border-t border-gray-200 pt-5 dark:border-gray-800 sm:col-span-2">
           <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800" onClick={onClose} type="button">Cancel</button>
           <button className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:cursor-not-allowed disabled:opacity-50" disabled={isSubmitting || !form.shift_id} type="submit">
             {isSubmitting ? "Saving..." : card ? "Update" : "Create"}
