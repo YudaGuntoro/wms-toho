@@ -25,7 +25,7 @@ public class StockMovementsController : ApiControllerBase
         page = Math.Max(1, page);
         limit = Math.Clamp(limit, 1, 100);
 
-        var query = _db.StockMovements.AsNoTracking();
+        IQueryable<StockMovement> query = _db.StockMovements.AsNoTracking().Include(x => x.CustomerRef);
         if (type.HasValue)
         {
             query = query.Where(x => x.MovementType == type.Value);
@@ -64,7 +64,8 @@ public class StockMovementsController : ApiControllerBase
                 LocationId = x.LocationId,
                 Location = x.LocationRef!.LocationCode,
                 Quantity = x.Quantity,
-                CustomerName = x.CustomerName,
+                CustomerId = x.CustomerId,
+                CustomerName = x.CustomerRef != null ? x.CustomerRef.CustomerName : x.CustomerName,
                 Timestamp = x.Timestamp
             })
             .ToListAsync();
@@ -211,6 +212,7 @@ public class StockMovementsController : ApiControllerBase
             var timestamp = request.Timestamp ?? DateTime.Now;
             var location = await ResolveLocation(request.Location);
             var part = await ResolvePart(type, request, location, timestamp);
+            var customer = await ResolveCustomer(request);
 
             var movement = new StockMovement
             {
@@ -218,15 +220,15 @@ public class StockMovementsController : ApiControllerBase
                 PartId = part.Id,
                 LocationId = location.Id,
                 Quantity = request.Quantity,
-                CustomerName = type == StockMovementType.OUT && !string.IsNullOrWhiteSpace(request.CustomerName)
-                    ? request.CustomerName.Trim()
-                    : null,
+                CustomerId = customer?.Id,
+                CustomerName = null,
                 Timestamp = timestamp
             };
 
             _db.StockMovements.Add(movement);
             await _db.SaveChangesAsync();
             movement.LocationRef = location;
+            movement.CustomerRef = customer;
             return ApiCreated(ToResponse(movement, part), type == StockMovementType.IN ? "Stock in recorded successfully." : "Stock out recorded successfully.");
         }
         catch (Exception ex)
@@ -521,9 +523,42 @@ public class StockMovementsController : ApiControllerBase
             LocationId = movement.LocationId,
             Location = movement.LocationRef?.LocationCode ?? string.Empty,
             Quantity = movement.Quantity,
-            CustomerName = movement.CustomerName,
+            CustomerId = movement.CustomerId,
+            CustomerName = movement.CustomerRef?.CustomerName ?? movement.CustomerName,
             Timestamp = movement.Timestamp
         };
+    }
+
+    private async Task<Customer?> ResolveCustomer(CreateStockMovementRequest request)
+    {
+        if (request.CustomerId is null && string.IsNullOrWhiteSpace(request.CustomerName))
+        {
+            return null;
+        }
+
+        if (request.CustomerId is not null)
+        {
+            var selected = await _db.Customers.FirstOrDefaultAsync(x => x.Id == request.CustomerId && x.IsActive);
+            if (selected is null)
+            {
+                throw new ArgumentException("Selected customer is not available.");
+            }
+
+            return selected;
+        }
+
+        var name = request.CustomerName!.Trim();
+        var customer = await _db.Customers.FirstOrDefaultAsync(x => x.CustomerName == name);
+        if (customer is not null)
+        {
+            if (!customer.IsActive) throw new ArgumentException("Selected customer is inactive.");
+            return customer;
+        }
+
+        customer = new Customer { CustomerName = name, IsActive = true, CreatedAt = DateTime.Now };
+        _db.Customers.Add(customer);
+        await _db.SaveChangesAsync();
+        return customer;
     }
 
     private static void ValidateMovement(CreateStockMovementRequest request)

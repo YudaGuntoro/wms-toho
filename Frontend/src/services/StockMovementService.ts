@@ -14,13 +14,14 @@ export type StockMovement = {
   location_id: number;
   location: string;
   quantity: number;
+  customer_id?: number | null;
   customer_name?: string | null;
   timestamp: string;
 };
 
 export type StockMovementPayload = Pick<
   StockMovement,
-  "part_number" | "part_name" | "location" | "quantity" | "customer_name" | "timestamp"
+  "part_number" | "part_name" | "location" | "quantity" | "customer_id" | "customer_name" | "timestamp"
 >;
 
 export type StockMovementQuery = {

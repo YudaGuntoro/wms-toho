@@ -13,6 +13,7 @@ import StockMovementService, {
 } from "@/services/StockMovementService";
 import LocationService, { Location } from "@/services/LocationService";
 import PartService, { Part } from "@/services/PartService";
+import CustomerService, { Customer } from "@/services/CustomerService";
 import DatePicker from "@/components/form/date-picker";
 import useDebouncedValue from "@/hooks/useDebouncedValue";
 
@@ -349,6 +350,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   const [items, setItems] = useState<StockMovement[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [loading, setLoading] = useState(true);
@@ -397,13 +399,15 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
 
     async function loadMasterData() {
       try {
-        const [partsResult, locationsResult] = await Promise.all([
+        const [partsResult, locationsResult, customersResult] = await Promise.all([
           PartService.getParts({ limit: 100 }, { signal: controller.signal }),
           LocationService.getLocations({ limit: 100 }, { signal: controller.signal }),
+          CustomerService.getCustomers({ limit: 100 }, { signal: controller.signal }),
         ]);
 
         setParts(partsResult.data);
         setLocations(locationsResult.data);
+        setCustomers(customersResult.data);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
@@ -452,6 +456,13 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
       .sort((a, b) => a.localeCompare(b))
       .map((location) => ({ value: location }));
   }, [locations, parts]);
+  const customerOptions = useMemo(
+    () => customers.filter((customer) => customer.is_active).map((customer) => ({
+      label: `Customer ID: ${customer.id}`,
+      value: customer.customer_name,
+    })),
+    [customers]
+  );
 
   function applyPart(part: Part) {
     setForm((current) => ({
@@ -484,6 +495,24 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     setForm((current) => ({ ...current, part_name: value }));
   }
 
+  function changeCustomer(value: string) {
+    const matchedCustomer = customers.find((customer) => customer.customer_name.toLowerCase() === value.trim().toLowerCase());
+    setForm((current) => ({
+      ...current,
+      customer_name: value,
+      customer_id: matchedCustomer?.id ?? null,
+    }));
+  }
+
+  function selectCustomer(value: string) {
+    const matchedCustomer = customers.find((customer) => customer.customer_name === value);
+    setForm((current) => ({
+      ...current,
+      customer_name: value,
+      customer_id: matchedCustomer?.id ?? null,
+    }));
+  }
+
   function toggleQrSelection(id: number) {
     setSelectedQrIds((current) =>
       current.includes(id) ? current.filter((selectedId) => selectedId !== id) : [...current, id]
@@ -508,7 +537,19 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     setSaving(true);
     setMessage(null);
     try {
-      const result = await StockMovementService.createMovement(type, form);
+      let customerId = form.customer_id ?? null;
+      const customerName = form.customer_name?.trim() ?? "";
+      if (customerName && !customerId) {
+        const customerResult = await CustomerService.createCustomer({ customer_name: customerName, is_active: true });
+        customerId = customerResult.data.id;
+        setCustomers((current) => current.some((customer) => customer.id === customerResult.data.id) ? current : [...current, customerResult.data]);
+      }
+
+      const result = await StockMovementService.createMovement(type, {
+        ...form,
+        customer_id: customerId,
+        customer_name: undefined,
+      });
       setMessage({ kind: "ok", text: `${title} recorded successfully.` });
       if (type === "IN") {
         setQrItem(result.data);
@@ -518,6 +559,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
         part_name: "",
         location: "",
         quantity: 1,
+        customer_id: null,
         customer_name: "",
         timestamp: currentLocalDateTime(),
       });
@@ -565,13 +607,11 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
         </div>
       ) : null}
 
-      <form className={`grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 ${type === "OUT" ? "xl:grid-cols-[1fr_1.2fr_1fr_1fr_120px_210px_auto]" : "xl:grid-cols-[1fr_1.2fr_1fr_120px_210px_auto]"}`} onSubmit={(event) => void submit(event)}>
+      <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_1fr_120px_210px_auto]" onSubmit={(event) => void submit(event)}>
         <AutocompleteInput onChange={changePartNumber} options={partNumberOptions} placeholder="Part / Lot Number" required value={form.part_number} />
         <AutocompleteInput onChange={changePartName} options={partNameOptions} placeholder="Part Name" required value={form.part_name} />
         <AutocompleteInput onChange={(value) => setForm((current) => ({ ...current, location: value }))} options={locationOptions} placeholder="Location" required value={form.location} />
-        {type === "OUT" ? (
-          <input className={inputClass} onChange={(event) => setForm((current) => ({ ...current, customer_name: event.target.value }))} placeholder="Customer Name (optional)" value={form.customer_name ?? ""} />
-        ) : null}
+        <AutocompleteInput onChange={changeCustomer} onSelect={selectCustomer} options={customerOptions} placeholder="Customer Name (optional)" value={form.customer_name ?? ""} />
         <input className={inputClass} min={1} onChange={(event) => setForm((current) => ({ ...current, quantity: Number(event.target.value) }))} placeholder="Qty" required type="number" value={form.quantity} />
         <DatePicker
           key={form.timestamp}
@@ -652,12 +692,10 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                   <p className="font-bold uppercase text-slate-400">Qty</p>
                   <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{item.quantity.toLocaleString("en-US")}</p>
                 </div>
-                {type === "OUT" ? (
-                  <div className="col-span-2 rounded-md bg-slate-50 p-2 dark:bg-slate-800">
-                    <p className="font-bold uppercase text-slate-400">Customer</p>
-                    <p className="mt-1 break-words font-semibold text-slate-700 dark:text-slate-200">{item.customer_name || "-"}</p>
-                  </div>
-                ) : null}
+                <div className="col-span-2 rounded-md bg-slate-50 p-2 dark:bg-slate-800">
+                  <p className="font-bold uppercase text-slate-400">Customer</p>
+                  <p className="mt-1 break-words font-semibold text-slate-700 dark:text-slate-200">{item.customer_name || "-"}</p>
+                </div>
                 <div className="col-span-2 rounded-md bg-slate-50 p-2 dark:bg-slate-800">
                   <p className="font-bold uppercase text-slate-400">TimeStamp</p>
                   <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{formatDate(item.timestamp)}</p>
@@ -697,7 +735,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                 <th className={`${type === "OUT" ? "rounded-tl-md" : ""} px-5 py-3`}>Part / Lot Number</th>
                 <th className="px-4 py-3">Part Name</th>
                 <th className="px-4 py-3">Location</th>
-                {type === "OUT" ? <th className="px-4 py-3">Customer Name</th> : null}
+                <th className="px-4 py-3">Customer Name</th>
                 <th className="px-4 py-3 text-right">Qty</th>
                 <th className={`${type === "OUT" ? "rounded-tr-md" : ""} px-5 py-3`}>TimeStamp</th>
                 {type === "IN" ? <th className="px-5 py-3 text-center">QR</th> : null}
@@ -721,7 +759,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                   <td className="px-5 py-4 font-bold text-slate-800 dark:text-white">{item.part_number}</td>
                   <td className="px-4 py-4 text-slate-700 dark:text-slate-200">{item.part_name}</td>
                   <td className="px-4 py-4 text-slate-600 dark:text-slate-300">{item.location}</td>
-                  {type === "OUT" ? <td className="px-4 py-4 text-slate-600 dark:text-slate-300">{item.customer_name || "-"}</td> : null}
+                  <td className="px-4 py-4 text-slate-600 dark:text-slate-300">{item.customer_name || "-"}</td>
                   <td className="px-4 py-4 text-right font-bold text-slate-800 dark:text-white">{item.quantity.toLocaleString("en-US")}</td>
                   <td className="px-5 py-4 text-slate-600 dark:text-slate-300">{formatDate(item.timestamp)}</td>
                   {type === "IN" ? (

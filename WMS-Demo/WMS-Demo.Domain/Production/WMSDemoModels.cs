@@ -55,6 +55,21 @@ public class WarehouseLocation
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }
 
+public class Customer
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("customer_name")]
+    public string CustomerName { get; set; } = string.Empty;
+
+    [JsonPropertyName("is_active")]
+    public bool IsActive { get; set; } = true;
+
+    [JsonPropertyName("created_at")]
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+}
+
 public class StockMovement
 {
     [JsonPropertyName("id")]
@@ -72,6 +87,9 @@ public class StockMovement
     [JsonPropertyName("quantity")]
     public int Quantity { get; set; }
 
+    [JsonPropertyName("customer_id")]
+    public int? CustomerId { get; set; }
+
     [JsonPropertyName("customer_name")]
     public string? CustomerName { get; set; }
 
@@ -87,6 +105,9 @@ public class StockMovement
 
     [JsonIgnore]
     public WarehouseLocation? LocationRef { get; set; }
+
+    [JsonIgnore]
+    public Customer? CustomerRef { get; set; }
 }
 
 public class PicCard
@@ -177,6 +198,15 @@ public class CreateLocationRequest
     public bool IsActive { get; set; } = true;
 }
 
+public class CreateCustomerRequest
+{
+    [JsonPropertyName("customer_name")]
+    public string CustomerName { get; set; } = string.Empty;
+
+    [JsonPropertyName("is_active")]
+    public bool IsActive { get; set; } = true;
+}
+
 public class CreatePicCardRequest
 {
     [JsonPropertyName("card_uid")]
@@ -212,6 +242,9 @@ public class CreateStockMovementRequest
     [JsonPropertyName("quantity")]
     public int Quantity { get; set; } = 1;
 
+    [JsonPropertyName("customer_id")]
+    public int? CustomerId { get; set; }
+
     [JsonPropertyName("customer_name")]
     public string? CustomerName { get; set; }
 
@@ -244,6 +277,9 @@ public class StockMovementResponse
 
     [JsonPropertyName("quantity")]
     public int Quantity { get; set; }
+
+    [JsonPropertyName("customer_id")]
+    public int? CustomerId { get; set; }
 
     [JsonPropertyName("customer_name")]
     public string? CustomerName { get; set; }

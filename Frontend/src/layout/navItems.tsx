@@ -40,6 +40,7 @@ export const navItems: NavItem[] = [
     subItems: [
       { name: "Parts", path: "/parts" },
       { name: "Locations", path: "/locations" },
+      { name: "Customers", path: "/customers" },
       { name: "Staff List", path: "/pic-cards" },
       { name: "Users", path: "/users" },
     ],
