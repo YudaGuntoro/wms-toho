@@ -14,6 +14,7 @@ import StockMovementService, {
 import LocationService, { Location } from "@/services/LocationService";
 import PartService, { Part } from "@/services/PartService";
 import DatePicker from "@/components/form/date-picker";
+import useDebouncedValue from "@/hooks/useDebouncedValue";
 
 const inputClass =
   "h-11 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-800 placeholder:text-slate-500 outline-none focus:border-[#184F8F] focus:ring-2 focus:ring-[#184F8F]/10 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-50 dark:placeholder:text-slate-300";
@@ -349,6 +350,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   const [locations, setLocations] = useState<Location[]>([]);
   const [parts, setParts] = useState<Part[]>([]);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -371,7 +373,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
       const result = await StockMovementService.getMovements({
         limit: 50,
         page: 1,
-        search,
+        search: debouncedSearch,
         type,
       });
       setItems(result.data);
@@ -380,7 +382,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     } finally {
       setLoading(false);
     }
-  }, [search, title, type]);
+  }, [debouncedSearch, title, type]);
 
   useEffect(() => {
     void load();

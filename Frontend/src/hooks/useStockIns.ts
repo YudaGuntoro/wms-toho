@@ -6,6 +6,7 @@ import StockInService, {
   StockInQuery,
 } from "@/services/StockInService";
 import { ApiListResponse } from "@/services/ParameterService";
+import useDebouncedValue from "./useDebouncedValue";
 
 type UseStockInsOptions = StockInQuery & {
   enabled?: boolean;
@@ -38,16 +39,18 @@ export const useStockIns = (options: UseStockInsOptions = {}) => {
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const debouncedIssueNumber = useDebouncedValue(query.issueNumber);
+  const debouncedPartNumber = useDebouncedValue(query.partNumber);
 
   const requestQuery = useMemo(
     () => ({
       page: query.page,
       limit: query.limit,
       date: query.date,
-      issueNumber: query.issueNumber,
-      partNumber: query.partNumber,
+      issueNumber: debouncedIssueNumber,
+      partNumber: debouncedPartNumber,
     }),
-    [query.date, query.issueNumber, query.limit, query.page, query.partNumber]
+    [debouncedIssueNumber, debouncedPartNumber, query.date, query.limit, query.page]
   );
 
   const startRequest = useCallback(() => {

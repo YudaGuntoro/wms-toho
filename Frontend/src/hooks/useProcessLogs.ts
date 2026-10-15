@@ -6,6 +6,7 @@ import ProcessLogService, {
   ProcessLog,
   ProcessLogQuery,
 } from "@/services/ProcessLogService";
+import useDebouncedValue from "./useDebouncedValue";
 
 type UseProcessLogsOptions = ProcessLogQuery & {
   enabled?: boolean;
@@ -39,21 +40,23 @@ export const useProcessLogs = (options: UseProcessLogsOptions = {}) => {
   const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const debouncedIssueNo = useDebouncedValue(query.issueNo);
+  const debouncedPartNumber = useDebouncedValue(query.partNumber);
 
   const requestQuery = useMemo(
     () => ({
       page: query.page,
       limit: query.limit,
-      issueNo: query.issueNo,
-      partNumber: query.partNumber,
+      issueNo: debouncedIssueNo,
+      partNumber: debouncedPartNumber,
       isActive: query.isActive,
     }),
     [
       query.isActive,
-      query.issueNo,
+      debouncedIssueNo,
       query.limit,
       query.page,
-      query.partNumber,
+      debouncedPartNumber,
     ]
   );
 

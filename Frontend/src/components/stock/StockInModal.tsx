@@ -7,6 +7,7 @@ import { useToast } from "@/context/ToastContext";
 import { useParts } from "@/hooks/useParts";
 import { Part } from "@/services/PartService";
 import DatePicker from "../form/date-picker";
+import useDebouncedValue from "@/hooks/useDebouncedValue";
 
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
@@ -53,6 +54,7 @@ function PartSearchSelect({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search);
 
   const selectedPart =
     parts.find((part) => part.id === value) ??
@@ -60,7 +62,7 @@ function PartSearchSelect({
   const selectedLabel = selectedPart
     ? `${getPartNumber(selectedPart)} - ${getPartName(selectedPart)}`
     : "";
-  const normalizedSearch = search.trim().toLowerCase();
+  const normalizedSearch = debouncedSearch.trim().toLowerCase();
   const filteredParts = useMemo(() => {
     const matchedParts = normalizedSearch
       ? parts.filter((part) =>
