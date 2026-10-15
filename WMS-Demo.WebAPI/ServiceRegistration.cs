@@ -72,7 +72,11 @@ public static class ServiceRegistration
                 policy.AllowAnyMethod()
                     .AllowAnyHeader();
 
-                if (allowedOrigins.Length > 0)
+                if (allowedOrigins.Any(origin => origin == "*"))
+                {
+                    policy.AllowAnyOrigin();
+                }
+                else if (allowedOrigins.Length > 0)
                 {
                     policy.WithOrigins(allowedOrigins);
                 }
