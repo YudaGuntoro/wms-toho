@@ -5,7 +5,7 @@ import CreateButton from "@/components/common/CreateButton";
 import DataTable, { DataTableColumn, DataTablePagination } from "@/components/common/DataTable";
 import { ConfirmModal } from "@/components/ui/modal";
 import { useToast } from "@/context/ToastContext";
-import { PencilIcon, TrashBinIcon } from "@/icons";
+import RowActions from "@/components/common/RowActions";
 import LocationService, { Location } from "@/services/LocationService";
 import LocationModal from "./LocationModal";
 
@@ -154,24 +154,10 @@ export default function LocationTable() {
         header: "Action",
         key: "action",
         render: (_, row) => (
-          <div className="flex items-center justify-center gap-4">
-            <button
-              className="inline-flex items-center justify-center rounded-md p-1 text-orange-500 transition-colors hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300"
-              onClick={() => handleUpdate(row)}
-              title="Edit"
-              type="button"
-            >
-              <PencilIcon className="h-4 w-4 fill-current" />
-            </button>
-            <button
-              className="inline-flex items-center justify-center rounded-md p-1 text-rose-500 transition-colors hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300"
-              onClick={() => handleDeleteClick(row)}
-              title="Delete"
-              type="button"
-            >
-              <TrashBinIcon className="h-4 w-4 fill-current" />
-            </button>
-          </div>
+          <RowActions
+            onEdit={() => handleUpdate(row)}
+            onDelete={() => handleDeleteClick(row)}
+          />
         ),
       },
     ],

@@ -1,5 +1,20 @@
 import type { NextConfig } from "next";
 
+// Keep the SVG coordinate system when CSS scales TailAdmin icons.
+const svgLoader = {
+  loader: "@svgr/webpack",
+  options: {
+    svgoConfig: {
+      plugins: [
+        {
+          name: "preset-default",
+          params: { overrides: { removeViewBox: false } },
+        },
+      ],
+    },
+  },
+};
+
 const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
@@ -27,7 +42,7 @@ const nextConfig: NextConfig = {
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
-      use: ["@svgr/webpack"],
+      use: [svgLoader],
     });
     return config;
   },
@@ -35,7 +50,7 @@ const nextConfig: NextConfig = {
     turbopack: {
       rules: {
         '*.svg': {
-          loaders: ['@svgr/webpack'],
+          loaders: [svgLoader],
           as: '*.js',
         },
       },

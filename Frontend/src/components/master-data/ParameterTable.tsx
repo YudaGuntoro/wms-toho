@@ -7,7 +7,7 @@ import DataTable, { DataTableColumn } from "@/components/common/DataTable";
 import { useParameters } from "@/hooks/useParameters";
 import ParameterService, { Parameter } from "@/services/ParameterService";
 import { useToast } from "@/context/ToastContext";
-import { PencilIcon, TrashBinIcon } from "@/icons";
+import RowActions from "@/components/common/RowActions";
 import ParameterModal from "./ParameterModal";
 import { ConfirmModal } from "@/components/ui/modal";
 
@@ -155,22 +155,10 @@ export default function ParameterTable() {
       header: "Action",
       align: "center",
       render: (_, row) => (
-        <div className="flex items-center justify-center gap-4">
-          <button
-            onClick={() => handleUpdate(row)}
-            className="inline-flex items-center justify-center rounded-md p-1 text-orange-500 transition-colors hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300"
-            title="Edit"
-          >
-            <PencilIcon className="h-4 w-4 fill-current" />
-          </button>
-          <button
-            onClick={() => handleDeleteClick(row)}
-            className="inline-flex items-center justify-center rounded-md p-1 text-rose-500 transition-colors hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300"
-            title="Delete"
-          >
-            <TrashBinIcon className="h-4 w-4 fill-current" />
-          </button>
-        </div>
+        <RowActions
+          onEdit={() => handleUpdate(row)}
+          onDelete={() => handleDeleteClick(row)}
+        />
       ),
     },
   ], []);

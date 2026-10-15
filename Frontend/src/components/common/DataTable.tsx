@@ -328,7 +328,7 @@ export default function DataTable<T extends object>({
                     isHeader
                     className={`px-5 py-3 text-theme-xs font-semibold text-white ${
                       alignClasses[column.align ?? "left"]
-                    } ${column.headerClassName ?? ""}`}
+                    } ${column.key === "action" ? "w-px whitespace-nowrap" : ""} ${column.headerClassName ?? ""}`}
                   >
                     {column.sortable && onSortChange ? (
                       <button
@@ -402,7 +402,7 @@ export default function DataTable<T extends object>({
                           key={column.key}
                           className={`px-5 py-4 text-theme-sm text-gray-700 dark:text-gray-300 ${
                             alignClasses[column.align ?? "left"]
-                          } ${column.className ?? ""}`}
+                          } ${column.key === "action" ? "w-px whitespace-nowrap" : ""} ${column.className ?? ""}`}
                         >
                           {column.render
                             ? column.render(value, row, index)

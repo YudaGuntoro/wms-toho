@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ConfirmModal } from "@/components/ui/modal/ConfirmModal";
-import { PencilIcon, TrashBinIcon } from "@/icons";
+import RowActions from "@/components/common/RowActions";
 import { apiDelete, apiGet, apiPost, apiPut } from "@/lib/api";
 import type { PicCard, PicCardPayload, ShiftMaster } from "./types";
 import { formatDateTime } from "./ui";
@@ -215,24 +215,12 @@ export default function PicCardsPage() {
                   <p className="mt-1 font-semibold text-slate-700 dark:text-slate-200">{formatDateTime(item.last_scanned_at)}</p>
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-amber-200 text-xs font-bold text-amber-600 transition hover:bg-amber-50 dark:border-amber-500/30 dark:text-amber-300 dark:hover:bg-amber-500/10"
-                  onClick={() => editCard(item)}
-                  type="button"
-                >
-                  <PencilIcon className="size-4 fill-current" />
-                  Update
-                </button>
-                <button
-                  className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-rose-200 text-xs font-bold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-rose-500/30 dark:text-rose-300 dark:hover:bg-rose-500/10"
-                  disabled={deletingId === item.id}
-                  onClick={() => setItemToDelete(item)}
-                  type="button"
-                >
-                  <TrashBinIcon className="h-4 w-4 shrink-0 fill-current" />
-                  {deletingId === item.id ? "Deleting..." : "Delete"}
-                </button>
+              <div className="mt-3 flex justify-end">
+                <RowActions
+                  onEdit={() => editCard(item)}
+                  onDelete={() => setItemToDelete(item)}
+                  deleteDisabled={deletingId === item.id}
+                />
               </div>
             </article>
           ))}
@@ -248,7 +236,7 @@ export default function PicCardsPage() {
                 <th className="px-4 py-3">Department</th>
                 <th className="px-4 py-3">Last Scan</th>
                 <th className="px-5 py-3">Status</th>
-                <th className="rounded-tr-md px-5 py-3 text-center">Action</th>
+                <th className="w-px whitespace-nowrap rounded-tr-md px-5 py-3 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -263,26 +251,12 @@ export default function PicCardsPage() {
                       {item.is_active ? "ACTIVE" : "INACTIVE"}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-center">
-                    <div className="flex items-center justify-center gap-4">
-                      <button
-                        className="inline-flex items-center justify-center rounded-md p-1 text-orange-500 transition hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300"
-                        onClick={() => editCard(item)}
-                        title="Update"
-                        type="button"
-                      >
-                        <PencilIcon className="h-4 w-4 fill-current" />
-                      </button>
-                    <button
-                      className="inline-flex items-center justify-center rounded-md p-1 text-rose-500 transition hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-rose-400 dark:hover:text-rose-300"
-                      disabled={deletingId === item.id}
-                      onClick={() => setItemToDelete(item)}
-                      title="Delete"
-                      type="button"
-                    >
-                      <TrashBinIcon className="h-4 w-4 shrink-0 fill-current" />
-                    </button>
-                    </div>
+                  <td className="w-px whitespace-nowrap px-5 py-4 text-center">
+                    <RowActions
+                      onEdit={() => editCard(item)}
+                      onDelete={() => setItemToDelete(item)}
+                      deleteDisabled={deletingId === item.id}
+                    />
                   </td>
                 </tr>
               ))}
