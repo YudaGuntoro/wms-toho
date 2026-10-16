@@ -12,24 +12,23 @@ export default function PartImportModal({ isOpen, onClose, onSuccess }: {
 }) {
   const toast = useToast();
   const [file, setFile] = useState<File | null>(null);
-  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
   const close = () => {
     if (isSubmitting) return;
     setFile(null);
-    setError("");
+
     onClose();
   };
 
   const downloadTemplate = async () => {
     setIsDownloading(true);
-    setError("");
+
     try {
       await PartService.downloadTemplate();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to download template.");
+      toast.error({ message: error instanceof Error ? error.message : "Failed to download template." });
     } finally {
       setIsDownloading(false);
     }
@@ -39,11 +38,11 @@ export default function PartImportModal({ isOpen, onClose, onSuccess }: {
     event.preventDefault();
     if (!file || isSubmitting) return;
     if (!/\.(xlsx|csv)$/i.test(file.name) || file.size === 0 || file.size > 5 * 1024 * 1024) {
-      setError("Select a non-empty .xlsx or .csv file up to 5 MB.");
+      toast.error({ message: "Select a non-empty .xlsx or .csv file up to 5 MB." });
       return;
     }
     setIsSubmitting(true);
-    setError("");
+
     try {
       const result = await PartService.importParts(file);
       toast.success({ title: "Import complete", message: result.message });
@@ -51,7 +50,7 @@ export default function PartImportModal({ isOpen, onClose, onSuccess }: {
       setFile(null);
       onClose();
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Failed to import parts. Please check your file.");
+      toast.error({ message: error instanceof Error ? error.message : "Failed to import parts. Please check your file." });
     } finally {
       setIsSubmitting(false);
     }
@@ -85,9 +84,8 @@ export default function PartImportModal({ isOpen, onClose, onSuccess }: {
         <p className="text-sm text-gray-500 dark:text-gray-400">Fill in the first sheet starting at row 2. Examples are on a separate sheet and will not be imported. Duplicate or invalid rows must be corrected before any parts are imported.</p>
         <label htmlFor="parts-import-file" className="text-sm font-medium text-gray-700 dark:text-gray-300">Import file</label>
         <input key={isOpen ? "open" : "closed"} id="parts-import-file" type="file" accept=".xlsx,.csv" required disabled={isSubmitting}
-          onChange={(event) => { setFile(event.target.files?.[0] ?? null); setError(""); }}
+          onChange={(event) => { setFile(event.target.files?.[0] ?? null); }}
           className="w-full rounded-lg border border-gray-300 p-3 text-sm text-gray-700 dark:border-gray-700 dark:text-gray-300" />
-        {error && <p role="alert" className="break-words text-sm text-red-500">{error}</p>}
         <div className="mt-4 flex justify-end gap-3">
           <button type="button" onClick={close} disabled={isSubmitting} className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-700 disabled:opacity-50 dark:border-gray-700 dark:text-gray-300">Cancel</button>
           <button type="submit" disabled={!file || isSubmitting} className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-50">{isSubmitting ? "Importing..." : "Import"}</button>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useToast } from "@/context/ToastContext";
+
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import YkkBrand from "@/components/brand/YkkBrand";
@@ -15,6 +17,7 @@ function safeNextPath(value: string | null) {
 }
 
 export default function SignInPage() {
+  const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = safeNextPath(searchParams.get("next"));
@@ -24,7 +27,6 @@ export default function SignInPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (hasValidAuthSession()) {
@@ -36,12 +38,12 @@ export default function SignInPage() {
     event.preventDefault();
 
     if (!username.trim() || !password) {
-      setError("Username and password are required.");
+      toast.error({ message: "Username and password are required." });
       return;
     }
 
     setLoading(true);
-    setError(null);
+
     try {
       const response = await apiPost<LoginResponse>("/api/auth/login", {
         username: username.trim(),
@@ -50,7 +52,7 @@ export default function SignInPage() {
       saveAuthSession(response);
       router.push(nextPath);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      toast.error({ message: err instanceof Error ? err.message : "Login failed." });
     } finally {
       setLoading(false);
     }
@@ -82,12 +84,6 @@ export default function SignInPage() {
             <h1 className="mb-3 text-title-sm font-bold text-gray-900 dark:text-white/90 sm:text-title-md">Sign in</h1>
             <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">Sign in to access the Toho Technology Indonesia warehouse operations workspace.</p>
           </div>
-
-          {error ? (
-            <div className="mb-6 rounded-lg border border-error-500/20 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-500/30 dark:bg-error-500/10 dark:text-error-400">
-              {error}
-            </div>
-          ) : null}
 
           <form autoComplete="on" onSubmit={(event) => void submit(event)}>
             <div className="space-y-6">

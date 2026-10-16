@@ -25,7 +25,15 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     headers,
   });
   const text = await response.text();
-  const payload = text ? (JSON.parse(text) as ApiResponse<T>) : null;
+  let payload: ApiResponse<T> | null = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text) as ApiResponse<T>;
+    } catch {
+      // Proxies can return HTML or plain text instead of the JSON API contract.
+      throw new Error(response.ok ? "Invalid response from server. Please try again." : `Request failed with status ${response.status}. Please try again.`);
+    }
+  }
 
   if (response.status === 401) {
     clearAuthSession();
@@ -35,7 +43,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
 
   if (!response.ok || payload?.success === false) {
-    throw new Error(payload?.message || `Request failed with status ${response.status}`);
+    throw new Error(payload?.message?.trim() || `Request failed with status ${response.status}`);
   }
 
   return payload ? payload.data : (undefined as T);

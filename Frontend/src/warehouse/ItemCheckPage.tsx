@@ -1,5 +1,7 @@
 "use client";
 
+import { useToast } from "@/context/ToastContext";
+
 import { FormEvent, useState } from "react";
 import StockMovementService, { ItemCheckQuery, ItemCheckResult } from "@/services/StockMovementService";
 
@@ -77,27 +79,27 @@ function ExcelIcon({ className = "" }: { className?: string }) {
 }
 
 export default function ItemCheckPage() {
+  const toast = useToast();
   const [searchValue, setSearchValue] = useState("");
   const [items, setItems] = useState<ItemCheckResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [scannedQr, setScannedQr] = useState<StockQrPayload | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    setMessage(null);
+
     try {
       const { query, qrPayload } = buildItemCheckQuery(searchValue);
       setScannedQr(qrPayload);
       const result = await StockMovementService.checkItem(query);
       setItems(result.data);
       if (!result.data.length) {
-        setMessage(qrPayload ? "No stock found for this scanned QR." : "No stock found for this Part Name.");
+        toast.info({ message: qrPayload ? "No stock found for this scanned QR." : "No stock found for this Part Name." });
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Failed to check item stock.");
+      toast.error({ message: error instanceof Error ? error.message : "Failed to check item stock." });
     } finally {
       setLoading(false);
     }
@@ -105,11 +107,12 @@ export default function ItemCheckPage() {
 
   async function exportExcel() {
     setExporting(true);
-    setMessage(null);
+
     try {
       await StockMovementService.exportStockOpname(scannedQr?.part_name ?? searchValue);
+      toast.success({ message: "Stock opname exported successfully." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Failed to export stock opname.");
+      toast.error({ message: error instanceof Error ? error.message : "Failed to export stock opname." });
     } finally {
       setExporting(false);
     }
@@ -157,8 +160,6 @@ export default function ItemCheckPage() {
           <span className="font-bold">QR detected:</span> {scannedQr.part_number || "-"} / {scannedQr.part_name || "-"} / {scannedQr.location || "-"}
         </div>
       ) : null}
-
-      {message ? <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">{message}</div> : null}
 
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="border-b border-slate-100 px-4 py-4 dark:border-slate-800 sm:px-5">

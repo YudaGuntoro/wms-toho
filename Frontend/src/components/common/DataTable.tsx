@@ -282,8 +282,8 @@ export default function DataTable<T extends object>({
           ))}
 
         {!isLoading && error ? (
-          <p className="rounded-lg border border-error-100 bg-error-50 px-4 py-6 text-center text-sm text-error-600 dark:border-error-500/20 dark:bg-error-500/10 dark:text-error-400">
-            {error}
+          <p className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            Unable to load data. Please try again.
           </p>
         ) : null}
 
@@ -371,10 +371,10 @@ export default function DataTable<T extends object>({
               {!isLoading && error && (
                 <TableRow>
                   <TableCell
-                    className="px-5 py-8 text-center text-sm text-error-600 dark:text-error-400"
+                    className="px-5 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                     colSpan={columns.length}
                   >
-                    {error}
+                    Unable to load data. Please try again.
                   </TableCell>
                 </TableRow>
               )}

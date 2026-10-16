@@ -1,5 +1,7 @@
 "use client";
 
+import { useToast } from "@/context/ToastContext";
+
 import { useCallback, useEffect, useState } from "react";
 import { ConfirmModal } from "@/components/ui/modal/ConfirmModal";
 import RowActions from "@/components/common/RowActions";
@@ -10,15 +12,15 @@ import { formatDateTime } from "./ui";
 import PicCardModal from "./PicCardModal";
 
 export default function PicCardsPage() {
+  const toast = useToast();
   const [items, setItems] = useState<PicCard[]>([]);
   const [shifts, setShifts] = useState<ShiftMaster[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<PicCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<PicCard | null>(null);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   function closeModal() {
     setEditingItem(null);
@@ -27,7 +29,8 @@ export default function PicCardsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setLoadFailed(false);
+
     try {
       const [cardsResult, shiftsResult] = await Promise.all([
         apiGet<PicCard[]>("/api/production/pic-cards"),
@@ -36,11 +39,12 @@ export default function PicCardsPage() {
       setItems(cardsResult);
       setShifts(shiftsResult);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data.");
+      setLoadFailed(true);
+      toast.error({ message: err instanceof Error ? err.message : "Failed to load data." });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     void load();
@@ -48,7 +52,7 @@ export default function PicCardsPage() {
 
   function editCard(item: PicCard) {
     setEditingItem(item);
-    setMessage(null);
+
     setIsModalOpen(true);
   }
 
@@ -58,14 +62,14 @@ export default function PicCardsPage() {
     }
 
     setDeletingId(itemToDelete.id);
-    setMessage(null);
+
     try {
       await apiDelete<boolean>(`/api/production/pic-cards/${itemToDelete.id}`);
-      setMessage({ kind: "ok", text: "Staff list deleted successfully." });
+      toast.success({ message: "Staff list deleted successfully." });
       setItemToDelete(null);
       await load();
     } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Failed to delete staff list." });
+      toast.error({ message: err instanceof Error ? err.message : "Failed to delete staff list." });
     } finally {
       setDeletingId(null);
     }
@@ -74,12 +78,6 @@ export default function PicCardsPage() {
   return (
     <div className="space-y-6">
       <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-[#184F8F]">Master Data</p><h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Staff List</h1><p className="mt-1 text-sm text-slate-500">Warehouse staff list available for job scanning.</p></div>
-      {message ? (
-        <div className={`rounded-md border px-4 py-3 text-sm font-medium ${message.kind === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
-          {message.text}
-        </div>
-      ) : null}
-      {error ? <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">{error}</div> : null}
       <div className="flex justify-end rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <CreateButton onClick={() => { setEditingItem(null); setIsModalOpen(true); }}>
           Create
@@ -118,7 +116,7 @@ export default function PicCardsPage() {
               </div>
             </article>
           ))}
-          {!items.length && !error && !loading ? <p className="py-8 text-center text-sm text-slate-400">No staff list found.</p> : null}
+          {!items.length && !loadFailed && !loading ? <p className="py-8 text-center text-sm text-slate-400">No staff list found.</p> : null}
           {loading ? <p className="py-8 text-center text-sm text-slate-400">Loading...</p> : null}
         </div>
         <div className="hidden overflow-x-auto md:block">
@@ -156,7 +154,7 @@ export default function PicCardsPage() {
               ))}
             </tbody>
           </table>
-          {!items.length && !error && !loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">No staff list found.</p> : null}
+          {!items.length && !loadFailed && !loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">No staff list found.</p> : null}
           {loading ? <p className="px-5 py-12 text-center text-sm text-slate-400">Loading...</p> : null}
         </div>
       </div>

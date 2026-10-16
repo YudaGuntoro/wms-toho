@@ -150,8 +150,8 @@ const request = async <T>(
         data !== null &&
         "message" in data &&
         typeof data.message === "string"
-          ? data.message
-          : response.statusText;
+          ? data.message.trim() || `Request failed with status ${response.status}`
+          : response.statusText.trim() || `Request failed with status ${response.status}`;
 
       throw new ApiError(message, response.status, data);
     }

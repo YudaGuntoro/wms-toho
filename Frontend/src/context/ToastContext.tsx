@@ -4,6 +4,7 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -54,28 +55,51 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const nextId = useRef(1);
+  const activeKeys = useRef(new Map<string, number>());
+  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
+
+  useEffect(() => {
+    const activeTimers = timers.current;
+    return () => {
+      activeTimers.forEach(clearTimeout);
+      activeTimers.clear();
+    };
+  }, []);
 
   const removeToast = useCallback((id: number) => {
+    const timer = timers.current.get(id);
+    if (timer) clearTimeout(timer);
+    timers.current.delete(id);
+    activeKeys.current.forEach((activeId, key) => {
+      if (activeId === id) activeKeys.current.delete(key);
+    });
     setToasts((current) => current.filter((toast) => toast.id !== id));
   }, []);
 
   const addToast = useCallback(
     (type: ToastType, toast: ToastInput) => {
+      const message = toast.message.trim() || "Something went wrong. Please try again.";
+      const key = JSON.stringify([type, toast.title ?? defaultTitles[type], message]);
+      // Concurrent requests and Strict Mode may report the same failure twice.
+      if (activeKeys.current.has(key)) return;
       const id = nextId.current;
       nextId.current += 1;
+      activeKeys.current.set(key, id);
+      const duration = toast.duration ?? (type === "error" ? 6000 : 4000);
 
       setToasts((current) => [
         ...current,
         {
-          duration: 4000,
           ...toast,
+          message,
+          duration,
           id,
           type,
         },
       ]);
 
-      if (toast.duration !== 0) {
-        globalThis.setTimeout(() => removeToast(id), toast.duration ?? 4000);
+      if (duration !== 0) {
+        timers.current.set(id, globalThis.setTimeout(() => removeToast(id), duration));
       }
     },
     [removeToast]
@@ -95,19 +119,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed right-4 bottom-4 z-999999 flex w-[calc(100%-2rem)] max-w-sm flex-col gap-3">
+      <div className="fixed right-4 bottom-4 z-999999 flex w-[calc(100%_-_2rem)] max-w-sm flex-col gap-3">
         {toasts.map((toast) => (
           <div
             key={toast.id}
             className={`rounded-lg border p-4 shadow-theme-lg ${toastStyles[toast.type]}`}
-            role="status"
+            role={toast.type === "error" ? "alert" : "status"}
+            aria-atomic="true"
           >
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">
                   {toast.title ?? defaultTitles[toast.type]}
                 </p>
-                <p className="mt-1 text-sm opacity-90">{toast.message}</p>
+                <p className="mt-1 max-h-48 overflow-y-auto break-words text-sm opacity-90">{toast.message}</p>
               </div>
               <button
                 aria-label="Close toast"

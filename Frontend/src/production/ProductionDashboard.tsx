@@ -1,5 +1,7 @@
 "use client";
 
+import { useToast } from "@/context/ToastContext";
+
 import type { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -178,15 +180,15 @@ function LastStockTable({
 }
 
 export default function ProductionDashboard() {
+  const toast = useToast();
   const [date, setDate] = useState(todayParam());
   const [lastStockIn, setLastStockIn] = useState<StockMovement[]>([]);
   const [lastStockOut, setLastStockOut] = useState<StockMovement[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
+
     try {
       const [stockIn, stockOut] = await Promise.all([
         StockMovementService.getMovements({ date, type: "IN", page: 1, limit: 100 }),
@@ -196,11 +198,11 @@ export default function ProductionDashboard() {
       setLastStockIn(stockIn.data);
       setLastStockOut(stockOut.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load the warehouse dashboard.");
+      toast.error({ message: err instanceof Error ? err.message : "Failed to load the warehouse dashboard." });
     } finally {
       setLoading(false);
     }
-  }, [date]);
+  }, [date, toast]);
 
   useEffect(() => {
     void load();
@@ -222,8 +224,6 @@ export default function ProductionDashboard() {
           <ProductionDatePicker className="max-w-[220px]" label="Operation Date" onChange={setDate} value={date} />
         </div>
       </section>
-
-      {error ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error} <button className="font-bold underline" onClick={() => void load()}>Try again</button></div> : null}
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <MetricCard accent="bg-sky-500" label="Daily Stock In" note="Total stock in quantity for selected date" value={loading ? "..." : stockInQty.toLocaleString("en-US")} />

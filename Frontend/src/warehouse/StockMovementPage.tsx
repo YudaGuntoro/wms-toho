@@ -1,5 +1,7 @@
 "use client";
 
+import { useToast } from "@/context/ToastContext";
+
 import { FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import QRCode from "qrcode";
@@ -92,7 +94,7 @@ async function printQrLabels(items: StockMovement[]) {
     }))
   );
   const printWindow = window.open("", "_blank", "width=900,height=700");
-  if (!printWindow) return;
+  if (!printWindow) throw new Error("Allow pop-ups in your browser to print QR labels.");
 
   printWindow.document.write(`
     <html>
@@ -281,6 +283,7 @@ function PartAutocomplete({ field, value, onChange, onSelect }: {
   onChange: (value: string) => void;
   onSelect: (part: Part) => void;
 }) {
+  const toast = useToast();
   const query = value.trim();
   const search = useDebouncedValue(query, 250);
   const [result, setResult] = useState<{ query: string; parts: Part[]; error?: string } | null>(null);
@@ -291,11 +294,13 @@ function PartAutocomplete({ field, value, onChange, onSelect }: {
       .then((response) => {
         if (!controller.signal.aborted) setResult({ query: search, parts: response.data });
       })
-      .catch(() => {
-        if (!controller.signal.aborted) setResult({ query: search, parts: [], error: "Master data unavailable. You can still enter the details manually." });
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setResult({ query: search, parts: [], error: "Enter the part details manually or try again." });
+        toast.error({ title: "Failed to load master parts", message: error instanceof Error ? error.message : "Master data is unavailable. Please try again." });
       });
     return () => controller.abort();
-  }, [search]);
+  }, [search, toast]);
 
   const currentResult = result?.query === query ? result : null;
   const options = (currentResult?.parts ?? []).map((part) => ({
@@ -322,6 +327,7 @@ function QrModal({
   item: StockMovement | null;
   onClose: () => void;
 }) {
+  const toast = useToast();
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
@@ -348,12 +354,14 @@ function QrModal({
       }
     }
 
-    void generateQr();
+    void generateQr().catch((error: unknown) => {
+      if (isMounted) toast.error({ message: error instanceof Error ? error.message : "Failed to generate QR code." });
+    });
 
     return () => {
       isMounted = false;
     };
-  }, [item]);
+  }, [item, toast]);
 
   const downloadQr = () => {
     if (!item || !qrDataUrl) {
@@ -371,7 +379,7 @@ function QrModal({
       return;
     }
 
-    void printQrLabels([item]);
+    void printQrLabels([item]).catch((error: unknown) => toast.error({ message: error instanceof Error ? error.message : "Failed to print QR labels." }));
   };
 
   return (
@@ -424,6 +432,7 @@ type StockMovementPageProps = {
 };
 
 export default function StockMovementPage({ type }: StockMovementPageProps) {
+  const toast = useToast();
   const title = type === "IN" ? "Stock In" : "Stock Out";
   const [items, setItems] = useState<StockMovement[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -433,7 +442,6 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [qrItem, setQrItem] = useState<StockMovement | null>(null);
   const [itemToDelete, setItemToDelete] = useState<StockMovement | null>(null);
   const [selectedQrIds, setSelectedQrIds] = useState<number[]>([]);
@@ -457,11 +465,11 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
       });
       setItems(result.data);
     } catch (error) {
-      setMessage({ kind: "error", text: error instanceof Error ? error.message : `Failed to load ${title}.` });
+      toast.error({ message: error instanceof Error ? error.message : `Failed to load ${title}.` });
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, title, type]);
+  }, [debouncedSearch, title, toast, type]);
 
   useEffect(() => {
     void load();
@@ -484,16 +492,15 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
         setLocations(locationsResult.data);
         setCustomers(customersResult.data);
       } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          return;
-        }
+        if (controller.signal.aborted) return;
+        toast.error({ title: "Failed to load master data", message: error instanceof Error ? error.message : "Please try again." });
       }
     }
 
     void loadMasterData();
 
     return () => controller.abort();
-  }, []);
+  }, [toast]);
 
   const selectedQrItems = useMemo(
     () => items.filter((item) => selectedQrIds.includes(item.id)),
@@ -558,17 +565,17 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
 
   function printSelectedQr() {
     if (!selectedQrItems.length) {
-      setMessage({ kind: "error", text: "Select at least one stock in record to print QR." });
+      toast.error({ message: "Select at least one stock in record to print QR." });
       return;
     }
 
-    void printQrLabels(selectedQrItems);
+    void printQrLabels(selectedQrItems).catch((error: unknown) => toast.error({ message: error instanceof Error ? error.message : "Failed to print QR labels." }));
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
-    setMessage(null);
+
     try {
       let customerId = form.customer_id ?? null;
       const customerName = form.customer_name?.trim() ?? "";
@@ -583,7 +590,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
         customer_id: customerId,
         customer_name: undefined,
       });
-      setMessage({ kind: "ok", text: `${title} recorded successfully.` });
+      toast.success({ message: `${title} recorded successfully.` });
       if (type === "IN") {
         setQrItem(result.data);
       }
@@ -598,7 +605,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
       });
       await load();
     } catch (error) {
-      setMessage({ kind: "error", text: error instanceof Error ? error.message : `Failed to save ${title}.` });
+      toast.error({ message: error instanceof Error ? error.message : `Failed to save ${title}.` });
     } finally {
       setSaving(false);
     }
@@ -610,15 +617,15 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     }
 
     setDeletingId(itemToDelete.id);
-    setMessage(null);
+
     try {
       await StockMovementService.deleteMovement(itemToDelete.id);
       setSelectedQrIds((current) => current.filter((id) => id !== itemToDelete.id));
-      setMessage({ kind: "ok", text: `${title} deleted successfully.` });
+      toast.success({ message: `${title} deleted successfully.` });
       setItemToDelete(null);
       await load();
     } catch (error) {
-      setMessage({ kind: "error", text: error instanceof Error ? error.message : `Failed to delete ${title}.` });
+      toast.error({ message: error instanceof Error ? error.message : `Failed to delete ${title}.` });
     } finally {
       setDeletingId(null);
     }
@@ -633,12 +640,6 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
           Record part movement with Part Number, Part Name, Location, Quantity, and TimeStamp.
         </p>
       </div>
-
-      {message ? (
-        <div className={`rounded-md border px-4 py-3 text-sm font-medium ${message.kind === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-rose-200 bg-rose-50 text-rose-700"}`}>
-          {message.text}
-        </div>
-      ) : null}
 
       <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_1fr_120px_210px_auto]" onSubmit={(event) => void submit(event)}>
         <PartAutocomplete field="part_number" onChange={(value) => setForm((current) => ({ ...current, part_number: value }))} onSelect={applyPart} value={form.part_number} />
