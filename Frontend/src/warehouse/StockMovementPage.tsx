@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import QRCode from "qrcode";
 import { Modal } from "@/components/ui/modal";
@@ -25,6 +25,7 @@ const dropdownClass =
 type AutocompleteOption = {
   label?: string;
   value: string;
+  part?: Part;
 };
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -169,72 +170,149 @@ async function printQrLabels(items: StockMovement[]) {
 }
 
 function AutocompleteInput({
-  onChange,
-  onSelect,
-  options,
-  placeholder,
-  required,
-  value,
+  onChange, onSelect, options, placeholder, required, value, loading = false, emptyMessage,
 }: {
   onChange: (value: string) => void;
-  onSelect?: (value: string) => void;
+  onSelect?: (value: string, option: AutocompleteOption) => void;
   options: AutocompleteOption[];
   placeholder: string;
   required?: boolean;
   value: string;
+  loading?: boolean;
+  emptyMessage?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listId = useId();
   const keyword = value.trim().toLowerCase();
   const visibleOptions = useMemo(() => {
-    const filteredOptions = keyword
-      ? options.filter((option) =>
-          `${option.value} ${option.label ?? ""}`.toLowerCase().includes(keyword)
-        )
+    const filtered = keyword
+      ? options.filter((option) => `${option.value} ${option.label ?? ""}`.toLowerCase().includes(keyword))
       : options;
-
-    return filteredOptions.slice(0, 8);
+    return filtered.slice(0, 30);
   }, [keyword, options]);
+  const activeOption = isOpen ? visibleOptions[activeIndex] : undefined;
 
-  function selectOption(optionValue: string) {
-    onSelect?.(optionValue);
-    onChange(optionValue);
+  function selectOption(option: AutocompleteOption) {
+    if (onSelect) onSelect(option.value, option);
+    else onChange(option.value);
     setIsOpen(false);
+    setActiveIndex(-1);
   }
 
   return (
     <div className="relative">
       <input
-        className={inputClass}
-        onBlur={() => window.setTimeout(() => setIsOpen(false), 120)}
+        ref={inputRef}
+        className={`${inputClass} pr-9`}
+        role="combobox"
+        aria-label={placeholder}
+        aria-autocomplete="list"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? listId : undefined}
+        aria-activedescendant={activeOption ? `${listId}-${activeIndex}` : undefined}
+        autoComplete="off"
+        onBlur={() => { setIsOpen(false); setActiveIndex(-1); }}
         onChange={(event) => {
           onChange(event.target.value);
           setIsOpen(true);
+          setActiveIndex(-1);
         }}
         onFocus={() => setIsOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            setIsOpen(true);
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            setActiveIndex((current) => {
+              if (!visibleOptions.length) return -1;
+              if (current < 0) return direction === 1 ? 0 : visibleOptions.length - 1;
+              return (current + direction + visibleOptions.length) % visibleOptions.length;
+            });
+          } else if (event.key === "Enter" && activeOption) {
+            event.preventDefault();
+            selectOption(activeOption);
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            setIsOpen(false);
+            setActiveIndex(-1);
+          }
+        }}
         placeholder={placeholder}
         required={required}
         value={value}
       />
-      {isOpen && visibleOptions.length > 0 ? (
-        <div className={dropdownClass}>
-          {visibleOptions.map((option) => (
+      <button type="button" aria-label={`Show ${placeholder} options`} aria-expanded={isOpen}
+        className="absolute right-0 top-0 flex h-11 w-9 items-center justify-center text-slate-400"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={() => { inputRef.current?.focus(); setIsOpen(!isOpen); setActiveIndex(-1); }}>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+      {isOpen && (visibleOptions.length > 0 || loading || emptyMessage) ? (
+        <div id={listId} role="listbox" aria-label={placeholder} className={dropdownClass}>
+          {loading ? <p role="status" className="px-3 py-2 text-sm text-slate-500">Searching master data...</p> : null}
+          {!loading && visibleOptions.length === 0 && emptyMessage ? <p role="status" className="px-3 py-2 text-sm text-slate-500">{emptyMessage}</p> : null}
+          {visibleOptions.map((option, index) => (
             <button
-              className="flex w-full flex-col px-3 py-2 text-left text-sm text-slate-700 hover:bg-blue-50 hover:text-[#184F8F] dark:text-slate-200 dark:hover:bg-blue-500/10"
-              key={`${option.value}-${option.label ?? ""}`}
+              id={`${listId}-${index}`}
+              role="option"
+              aria-selected={index === activeIndex}
+              tabIndex={-1}
+              className={`flex w-full flex-col px-3 py-2 text-left text-sm text-slate-700 hover:bg-blue-50 hover:text-[#184F8F] dark:text-slate-200 dark:hover:bg-blue-500/10 ${index === activeIndex ? "bg-blue-50 dark:bg-blue-500/10" : ""}`}
+              key={option.part?.id ?? `${option.value}-${option.label ?? ""}`}
               onMouseDown={(event) => event.preventDefault()}
-              onClick={() => selectOption(option.value)}
+              onClick={() => selectOption(option)}
               type="button"
             >
               <span className="truncate font-medium">{option.value}</span>
-              {option.label ? (
-                <span className="mt-0.5 truncate text-xs text-slate-400">{option.label}</span>
-              ) : null}
+              {option.label ? <span className="mt-0.5 truncate text-xs text-slate-400">{option.label}</span> : null}
             </button>
           ))}
         </div>
       ) : null}
     </div>
   );
+}
+
+function PartAutocomplete({ field, value, onChange, onSelect }: {
+  field: "part_number" | "part_name";
+  value: string;
+  onChange: (value: string) => void;
+  onSelect: (part: Part) => void;
+}) {
+  const query = value.trim();
+  const search = useDebouncedValue(query, 250);
+  const [result, setResult] = useState<{ query: string; parts: Part[]; error?: string } | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    PartService.getParts({ search, limit: 30 }, { signal: controller.signal })
+      .then((response) => {
+        if (!controller.signal.aborted) setResult({ query: search, parts: response.data });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setResult({ query: search, parts: [], error: "Master data unavailable. You can still enter the details manually." });
+      });
+    return () => controller.abort();
+  }, [search]);
+
+  const currentResult = result?.query === query ? result : null;
+  const options = (currentResult?.parts ?? []).map((part) => ({
+    value: part[field],
+    label: field === "part_number" ? part.part_name : part.part_number,
+    part,
+  }));
+
+  return <AutocompleteInput
+    onChange={onChange}
+    onSelect={(_, option) => { if (option.part) onSelect(option.part); }}
+    options={options}
+    placeholder={field === "part_number" ? "Part Number" : "Part Name"}
+    required value={value}
+    loading={!currentResult}
+    emptyMessage={currentResult?.error ?? "No matching master parts. Continue typing to enter manually."}
+  />;
 }
 
 function QrModal({
@@ -349,7 +427,6 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   const title = type === "IN" ? "Stock In" : "Stock Out";
   const [items, setItems] = useState<StockMovement[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [parts, setParts] = useState<Part[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -399,13 +476,11 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
 
     async function loadMasterData() {
       try {
-        const [partsResult, locationsResult, customersResult] = await Promise.all([
-          PartService.getParts({ limit: 100 }, { signal: controller.signal }),
+        const [locationsResult, customersResult] = await Promise.all([
           LocationService.getLocations({ limit: 100 }, { signal: controller.signal }),
           CustomerService.getCustomers({ limit: 100 }, { signal: controller.signal }),
         ]);
 
-        setParts(partsResult.data);
         setLocations(locationsResult.data);
         setCustomers(customersResult.data);
       } catch (error) {
@@ -425,37 +500,18 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
     [items, selectedQrIds]
   );
   const allQrItemsSelected = type === "IN" && items.length > 0 && selectedQrIds.length === items.length;
-  const partNumberOptions = useMemo(
-    () =>
-      parts.map((part) => ({
-        label: `${part.part_name} - ${part.location}`,
-        value: part.part_number,
-      })),
-    [parts]
-  );
-  const partNameOptions = useMemo(
-    () =>
-      parts.map((part) => ({
-        label: `${part.part_number} - ${part.location}`,
-        value: part.part_name,
-      })),
-    [parts]
-  );
   const locationOptions = useMemo(() => {
     const values = new Set<string>();
 
     locations.forEach((location) => {
       values.add(location.location_code);
     });
-    parts.forEach((part) => {
-      values.add(part.location);
-    });
 
     return Array.from(values)
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b))
       .map((location) => ({ value: location }));
-  }, [locations, parts]);
+  }, [locations]);
   const customerOptions = useMemo(
     () => customers.filter((customer) => customer.is_active).map((customer) => ({
       label: `Customer ID: ${customer.id}`,
@@ -467,32 +523,9 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
   function applyPart(part: Part) {
     setForm((current) => ({
       ...current,
-      location: part.location || current.location,
       part_name: part.part_name,
       part_number: part.part_number,
     }));
-  }
-
-  function changePartNumber(value: string) {
-    const matchedPart = parts.find((part) => part.part_number.toLowerCase() === value.trim().toLowerCase());
-
-    if (matchedPart) {
-      applyPart(matchedPart);
-      return;
-    }
-
-    setForm((current) => ({ ...current, part_number: value }));
-  }
-
-  function changePartName(value: string) {
-    const matchedPart = parts.find((part) => part.part_name.toLowerCase() === value.trim().toLowerCase());
-
-    if (matchedPart) {
-      applyPart(matchedPart);
-      return;
-    }
-
-    setForm((current) => ({ ...current, part_name: value }));
   }
 
   function changeCustomer(value: string) {
@@ -597,7 +630,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#184F8F]">Warehouse Operation</p>
         <h1 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{title}</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-          Record part movement with Part / Lot Number, Part Name, Location, Quantity, and TimeStamp.
+          Record part movement with Part Number, Part Name, Location, Quantity, and TimeStamp.
         </p>
       </div>
 
@@ -608,8 +641,8 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
       ) : null}
 
       <form className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-5 md:grid-cols-2 xl:grid-cols-[1fr_1.2fr_1fr_1fr_120px_210px_auto]" onSubmit={(event) => void submit(event)}>
-        <AutocompleteInput onChange={changePartNumber} options={partNumberOptions} placeholder="Part / Lot Number" required value={form.part_number} />
-        <AutocompleteInput onChange={changePartName} options={partNameOptions} placeholder="Part Name" required value={form.part_name} />
+        <PartAutocomplete field="part_number" onChange={(value) => setForm((current) => ({ ...current, part_number: value }))} onSelect={applyPart} value={form.part_number} />
+        <PartAutocomplete field="part_name" onChange={(value) => setForm((current) => ({ ...current, part_name: value }))} onSelect={applyPart} value={form.part_name} />
         <AutocompleteInput onChange={(value) => setForm((current) => ({ ...current, location: value }))} options={locationOptions} placeholder="Location" required value={form.location} />
         <AutocompleteInput onChange={changeCustomer} onSelect={selectCustomer} options={customerOptions} placeholder="Customer Name (optional)" value={form.customer_name ?? ""} />
         <input className={inputClass} min={1} onChange={(event) => setForm((current) => ({ ...current, quantity: Number(event.target.value) }))} placeholder="Qty" required type="number" value={form.quantity} />
@@ -732,7 +765,7 @@ export default function StockMovementPage({ type }: StockMovementPageProps) {
                     />
                   </th>
                 ) : null}
-                <th className={`${type === "OUT" ? "rounded-tl-md" : ""} px-5 py-3`}>Part / Lot Number</th>
+                <th className={`${type === "OUT" ? "rounded-tl-md" : ""} px-5 py-3`}>Part Number</th>
                 <th className="px-4 py-3">Part Name</th>
                 <th className="px-4 py-3">Location</th>
                 <th className="px-4 py-3">Customer Name</th>

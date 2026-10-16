@@ -126,6 +126,7 @@ const StockMovementService = {
     const response = await fetch(
       `${getApiBaseUrl()}/api/stock-movements/stock-opname/export${params.toString() ? `?${params}` : ""}`,
       {
+        cache: "no-store",
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       }
     );

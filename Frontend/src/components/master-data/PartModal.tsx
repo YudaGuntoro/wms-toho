@@ -22,7 +22,6 @@ const currentLocalDateTime = () => {
 const emptyFormData = (): PartPayload => ({
   part_number: "",
   part_name: "",
-  location: "",
   timestamp: currentLocalDateTime(),
 });
 
@@ -48,7 +47,6 @@ export default function PartModal({
       setFormData({
         part_number: part.part_number || "",
         part_name: part.part_name || "",
-        location: part.location || "",
         timestamp: part.timestamp ? part.timestamp.slice(0, 16) : currentLocalDateTime(),
       });
       return;
@@ -113,7 +111,7 @@ export default function PartModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Part / Lot Number
+            Part Number
           </label>
           <input
             type="text"
@@ -122,7 +120,7 @@ export default function PartModal({
             onChange={handleChange}
             required
             className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-            placeholder="Enter part / lot number"
+            placeholder="Enter part number"
           />
         </div>
 
@@ -138,21 +136,6 @@ export default function PartModal({
             required
             className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
             placeholder="Enter part name"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Location
-          </label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            required
-            className="h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
-            placeholder="Enter location"
           />
         </div>
 

@@ -47,11 +47,8 @@ public class WMSDemoDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.PartNumber).HasColumnName("part_number").HasMaxLength(80).IsRequired();
             entity.Property(x => x.PartName).HasColumnName("part_name").HasMaxLength(200).IsRequired();
-            entity.Property(x => x.LocationId).HasColumnName("location_id");
             entity.Property(x => x.Timestamp).HasColumnName("timestamp");
-            entity.HasOne(x => x.LocationRef).WithMany().HasForeignKey(x => x.LocationId).OnDelete(DeleteBehavior.Restrict);
             entity.HasIndex(x => x.PartNumber).IsUnique();
-            entity.HasIndex(x => x.LocationId);
             entity.HasIndex(x => x.Timestamp);
         });
 

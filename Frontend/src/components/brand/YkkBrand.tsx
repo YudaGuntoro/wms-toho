@@ -37,10 +37,10 @@ export default function YkkBrand({
       </div>
       {showTitle ? (
         <div className="min-w-0">
-          <p className={`truncate font-extrabold leading-tight ${inverted ? "text-white" : "text-[#184F8F]"} ${titleSize}`}>
-            WMS-Toho
+          <p className={`font-extrabold leading-tight ${inverted ? "text-white" : "text-[#184F8F]"} ${titleSize}`}>
+            Toho Technology Indonesia
           </p>
-          <p className={`truncate font-medium ${inverted ? "text-white/75" : "text-slate-500"} ${subtitleSize}`}>Warehouse Management System</p>
+          <p className={`font-medium ${inverted ? "text-white/75" : "text-slate-500"} ${subtitleSize}`}>Warehouse Management System</p>
         </div>
       ) : null}
     </div>

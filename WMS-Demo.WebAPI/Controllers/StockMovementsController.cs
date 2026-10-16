@@ -211,7 +211,7 @@ public class StockMovementsController : ApiControllerBase
             ValidateMovement(request);
             var timestamp = request.Timestamp ?? DateTime.Now;
             var location = await ResolveLocation(request.Location);
-            var part = await ResolvePart(type, request, location, timestamp);
+            var part = await ResolvePart(type, request, timestamp);
             var customer = await ResolveCustomer(request);
 
             var movement = new StockMovement
@@ -356,7 +356,7 @@ public class StockMovementsController : ApiControllerBase
         var headers = new[]
         {
             "No",
-            "Part / Lot Number",
+            "Part Number",
             "Part Name",
             "Location",
             "Stock In",
@@ -457,7 +457,7 @@ public class StockMovementsController : ApiControllerBase
         worksheet.PageSetup.Footer.Right.AddText("Page &P of &N");
     }
 
-    private async Task<Part> ResolvePart(StockMovementType type, CreateStockMovementRequest request, WarehouseLocation location, DateTime timestamp)
+    private async Task<Part> ResolvePart(StockMovementType type, CreateStockMovementRequest request, DateTime timestamp)
     {
         var partNumber = request.PartNumber.Trim();
         var part = await _db.Parts.FirstOrDefaultAsync(x => x.PartNumber == partNumber);
@@ -472,7 +472,6 @@ public class StockMovementsController : ApiControllerBase
             {
                 PartNumber = partNumber,
                 PartName = request.PartName.Trim(),
-                LocationId = location.Id,
                 Timestamp = timestamp
             };
             _db.Parts.Add(part);
@@ -483,7 +482,6 @@ public class StockMovementsController : ApiControllerBase
         if (type == StockMovementType.IN)
         {
             part.PartName = request.PartName.Trim();
-            part.LocationId = location.Id;
             part.Timestamp = timestamp;
         }
 
@@ -567,7 +565,7 @@ public class StockMovementsController : ApiControllerBase
             string.IsNullOrWhiteSpace(request.PartName) ||
             string.IsNullOrWhiteSpace(request.Location))
         {
-            throw new ArgumentException("Part / Lot Number, Part Name, and Location are required.");
+            throw new ArgumentException("Part Number, Part Name, and Location are required.");
         }
 
         if (request.Quantity <= 0)

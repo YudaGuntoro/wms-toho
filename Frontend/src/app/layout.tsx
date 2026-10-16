@@ -5,12 +5,16 @@ import { SidebarProvider } from '@/context/SidebarContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { ToastProvider } from '@/context/ToastContext';
 
+// All application pages render per request; static files keep their own cache policy.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: {
-    default: "WMS-Toho Warehouse Management System",
-    template: "%s | WMS-Toho",
+    default: "Toho Technology Indonesia Warehouse Management System",
+    template: "%s | Toho Technology Indonesia",
   },
-  description: "Warehouse Management System for WMS-Toho",
+  description: "Warehouse Management System for Toho Technology Indonesia",
   icons: {
     apple: "/icon.png?v=wms-toho-logo",
     icon: "/icon.png?v=wms-toho-logo",

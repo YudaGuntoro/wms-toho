@@ -1,13 +1,9 @@
 import type { ApiResponse } from "./types";
 import { clearAuthSession, getStoredToken, redirectToSignIn } from "./auth";
 
-function normalizeBaseUrl(value?: string) {
-  const raw = (value ?? "").split(/\s+#/)[0].trim();
-  return raw.replace(/\/+$/, "");
-}
-
+// Browser API calls must stay on the page's origin, including HTTPS on the VPS.
 export function getApiBaseUrl() {
-  return normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
+  return "";
 }
 
 export async function apiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -25,6 +21,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
 
   const response = await fetch(`${getApiBaseUrl()}${path}`, {
     ...init,
+    cache: "no-store",
     headers,
   });
   const text = await response.text();

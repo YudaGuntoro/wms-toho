@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from "@/lib/api";
+import { getStoredToken } from "@/lib/auth";
 import api, { ApiRequestOptions } from "@/utils/api";
 
 export type ApiPagination = {
@@ -18,14 +20,12 @@ export type Part = {
   id: number;
   part_number: string;
   part_name: string;
-  location_id: number;
-  location: string;
   timestamp: string;
 };
 
 export type PartPayload = Pick<
   Part,
-  "part_number" | "part_name" | "location" | "timestamp"
+  "part_number" | "part_name" | "timestamp"
 >;
 
 export type PartQuery = {
@@ -41,6 +41,30 @@ const normalizeQuery = (query: PartQuery) => ({
 });
 
 const PartService = {
+  downloadTemplate: async () => {
+    const token = getStoredToken();
+    const response = await fetch(`${getApiBaseUrl()}/api/parts/import-template`, {
+      cache: "no-store",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
+    if (!response.ok) throw new Error("Failed to download the template. Please try again.");
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Part-Master-Template.xlsx";
+    link.click();
+    URL.revokeObjectURL(url);
+  },
+
+  importParts: async (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await api.post<{ success: boolean; message: string; data: { imported: number } }>(
+      "/api/parts/import", form
+    );
+    return response.data;
+  },
+
   getParts: async (query: PartQuery = {}, options?: ApiRequestOptions) => {
     const response = await api.get<ApiListResponse<Part>>("/api/parts", {
       ...options,

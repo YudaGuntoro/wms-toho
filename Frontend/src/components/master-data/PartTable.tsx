@@ -9,6 +9,7 @@ import { useToast } from "@/context/ToastContext";
 import RowActions from "@/components/common/RowActions";
 import { ConfirmModal } from "@/components/ui/modal";
 import PartModal from "./PartModal";
+import PartImportModal from "./PartImportModal";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
@@ -34,17 +35,12 @@ const getErrorMessage = (error: unknown, fallback: string) =>
 const baseColumns: DataTableColumn<Part>[] = [
   {
     key: "part_number",
-    header: "Part / Lot Number",
+    header: "Part Number",
     sortable: true,
   },
   {
     key: "part_name",
     header: "Part Name",
-    sortable: true,
-  },
-  {
-    key: "location",
-    header: "Location",
     sortable: true,
   },
   {
@@ -58,6 +54,7 @@ export default function PartTable() {
   const toast = useToast();
   const lastErrorRef = useRef<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [partToDelete, setPartToDelete] = useState<Part | null>(null);
@@ -160,6 +157,9 @@ export default function PartTable() {
         actions={
           <div className="flex items-center gap-3">
             <CreateButton onClick={handleCreate} />
+            <button type="button" onClick={() => setIsImportOpen(true)} className="rounded-lg border border-brand-500 px-4 py-2 text-sm font-medium text-brand-500 hover:bg-brand-50 dark:hover:bg-gray-800">
+              Import
+            </button>
           </div>
         }
         columns={columns}
@@ -173,8 +173,14 @@ export default function PartTable() {
         onSearchChange={setSearch}
         pagination={pagination}
         rowKey="id"
-        searchPlaceholder="Search part / lot number, name, or location"
+        searchPlaceholder="Search part number or name"
         searchValue={query.search}
+      />
+
+      <PartImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={refetch}
       />
 
       <PartModal

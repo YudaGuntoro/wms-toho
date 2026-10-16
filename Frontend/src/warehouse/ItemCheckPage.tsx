@@ -201,7 +201,7 @@ export default function ItemCheckPage() {
             <thead className="bg-[#184F8F] text-xs uppercase text-white">
               <tr>
                 <th className="rounded-tl-md px-5 py-3">Part Name</th>
-                <th className="px-4 py-3">Part / Lot Number</th>
+                <th className="px-4 py-3">Part Number</th>
                 <th className="px-4 py-3">Location</th>
                 <th className="px-4 py-3 text-right">Stock In</th>
                 <th className="px-4 py-3 text-right">Stock Out</th>

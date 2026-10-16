@@ -133,10 +133,9 @@ public class LocationsController : ApiControllerBase
                 return ApiNotFound("Location was not found.");
             }
 
-            if (await _db.Parts.AnyAsync(x => x.LocationId == id) ||
-                await _db.StockMovements.AnyAsync(x => x.LocationId == id))
+            if (await _db.StockMovements.AnyAsync(x => x.LocationId == id))
             {
-                throw new InvalidOperationException("Location cannot be deleted because it is already used by parts or stock movements.");
+                throw new InvalidOperationException("Location cannot be deleted because it is already used by stock movements.");
             }
 
             _db.Locations.Remove(location);

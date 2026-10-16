@@ -1,3 +1,4 @@
+-- Legacy normalization: run remove_part_location.sql after this script.
 USE `wms-system-toho`;
 
 SET @has_parts_location := (
@@ -252,5 +253,5 @@ PREPARE drop_stock_location_statement FROM @drop_stock_location;
 EXECUTE drop_stock_location_statement;
 DEALLOCATE PREPARE drop_stock_location_statement;
 
-ALTER TABLE parts MODIFY location_id INT NOT NULL;
+ALTER TABLE parts MODIFY location_id INT NULL;
 ALTER TABLE stock_movements MODIFY location_id INT NOT NULL;

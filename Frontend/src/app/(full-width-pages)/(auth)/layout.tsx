@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import Link from "next/link";
 import React from "react";
 
-const productName = "WMS-Toho Warehouse Management System";
+const productName = "Warehouse Management System";
 
 export default function AuthLayout({
   children,

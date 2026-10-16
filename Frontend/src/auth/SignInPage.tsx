@@ -80,7 +80,7 @@ export default function SignInPage() {
               Warehouse Management
             </div>
             <h1 className="mb-3 text-title-sm font-bold text-gray-900 dark:text-white/90 sm:text-title-md">Sign in</h1>
-            <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">Sign in to access the WMS-Toho warehouse operations workspace.</p>
+            <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">Sign in to access the Toho Technology Indonesia warehouse operations workspace.</p>
           </div>
 
           {error ? (
@@ -162,7 +162,7 @@ export default function SignInPage() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-500">WMS-Toho</p>
+        <p className="mt-6 text-center text-xs text-gray-500 dark:text-gray-500">Toho Technology Indonesia</p>
       </div>
     </div>
   );

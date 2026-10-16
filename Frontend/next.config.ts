@@ -19,42 +19,20 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: "standalone",
   async headers() {
-    return [
-      {
-        source: "/",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "no-store, no-cache, must-revalidate, proxy-revalidate",
-          },
-          {
-            key: "Pragma",
-            value: "no-cache",
-          },
-          {
-            key: "Expires",
-            value: "0",
-          },
-        ],
-      },
-      {
-        source: "/signin",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "no-store, no-cache, must-revalidate, proxy-revalidate",
-          },
-          {
-            key: "Pragma",
-            value: "no-cache",
-          },
-          {
-            key: "Expires",
-            value: "0",
-          },
-        ],
-      },
-    ];
+    return [{
+      // Exclude Next.js assets and public files; include every page and /api.
+      source: "/((?!_next/|.*\\.[^/]+$).*)",
+      headers: [
+        { key: "Cache-Control", value: "no-store, no-cache, must-revalidate, proxy-revalidate" },
+        { key: "Pragma", value: "no-cache" },
+        { key: "Expires", value: "0" },
+      ],
+    }];
+  },
+  async rewrites() {
+    // Browsers always call /api. Only this server-side proxy knows the backend URL.
+    const target = (process.env.API_PROXY_TARGET || "http://127.0.0.1:5243").replace(/\/$/, "");
+    return [{ source: "/api/:path*", destination: `${target}/api/:path*` }];
   },
   webpack(config) {
     config.module.rules.push({

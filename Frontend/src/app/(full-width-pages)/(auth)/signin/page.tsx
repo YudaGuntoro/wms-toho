@@ -2,8 +2,8 @@ import SignInPage from "@/auth/SignInPage";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign In | WMS-Toho",
-  description: "WMS-Toho warehouse management sign in",
+  title: "Sign In | Toho Technology Indonesia",
+  description: "Toho Technology Indonesia warehouse management sign in",
 };
 
 export const dynamic = "force-dynamic";

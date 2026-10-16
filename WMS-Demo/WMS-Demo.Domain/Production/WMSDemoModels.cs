@@ -20,18 +20,9 @@ public class Part
     [JsonPropertyName("part_name")]
     public string PartName { get; set; } = string.Empty;
 
-    [JsonPropertyName("location_id")]
-    public int LocationId { get; set; }
-
     [JsonPropertyName("timestamp")]
     public DateTime Timestamp { get; set; } = DateTime.Now;
 
-    [NotMapped]
-    [JsonPropertyName("location")]
-    public string Location { get; set; } = string.Empty;
-
-    [JsonIgnore]
-    public WarehouseLocation? LocationRef { get; set; }
 }
 
 public class WarehouseLocation
@@ -175,9 +166,6 @@ public class CreatePartRequest
 
     [JsonPropertyName("part_name")]
     public string PartName { get; set; } = string.Empty;
-
-    [JsonPropertyName("location")]
-    public string Location { get; set; } = string.Empty;
 
     [JsonPropertyName("timestamp")]
     public DateTime? Timestamp { get; set; }

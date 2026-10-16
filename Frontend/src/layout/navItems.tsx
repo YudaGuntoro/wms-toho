@@ -38,11 +38,11 @@ export const navItems: NavItem[] = [
     icon: <BoxCubeIcon />,
     name: "Master Data",
     subItems: [
-      { name: "Parts", path: "/parts" },
-      { name: "Locations", path: "/locations" },
-      { name: "Customers", path: "/customers" },
+      { name: "Part", path: "/parts" },
+      { name: "Location", path: "/locations" },
+      { name: "Customer", path: "/customers" },
       { name: "Staff List", path: "/pic-cards" },
-      { name: "Users", path: "/users" },
+      { name: "User", path: "/users" },
     ],
   },
 ];

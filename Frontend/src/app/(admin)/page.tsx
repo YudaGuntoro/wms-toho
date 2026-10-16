@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "WMS-Toho Warehouse Management System",
+  title: "Toho Technology Indonesia Warehouse Management System",
   description: "Warehouse inventory, picking, and operation monitoring dashboard",
 };
 

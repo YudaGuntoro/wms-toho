@@ -150,6 +150,16 @@ public static class ServiceRegistration
         app.UseCors();
         app.UseHttpsRedirection();
         app.UseRouting();
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+            {
+                context.Response.Headers.CacheControl = "no-store, no-cache, must-revalidate, proxy-revalidate";
+                context.Response.Headers.Pragma = "no-cache";
+                context.Response.Headers.Expires = "0";
+            }
+            await next();
+        });
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();

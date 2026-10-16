@@ -1,3 +1,4 @@
+import { getApiBaseUrl } from "@/lib/api";
 import { clearAuthSession, getStoredToken, redirectToSignIn } from "@/lib/auth";
 
 export type QueryParamValue =
@@ -36,7 +37,7 @@ export class ApiError<T = unknown> extends Error {
   }
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+const API_BASE_URL = getApiBaseUrl();
 const DEFAULT_TIMEOUT = 30000;
 
 const buildQueryString = (params?: QueryParams) => {
@@ -125,6 +126,7 @@ const request = async <T>(
   try {
     const response = await fetch(buildUrl(endpoint, params), {
       ...fetchOptions,
+      cache: "no-store",
       body:
         body === undefined || body === null || isFormData(body)
           ? (body as BodyInit | null | undefined)
