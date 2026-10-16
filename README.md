@@ -100,3 +100,10 @@ with `API_PROXY_TARGET` (default `http://127.0.0.1:5243`).
 See `docs/deploy-vps.md` for the Nginx configuration and deployment checks.
 After a production build, run `npm run check:cache -- http://localhost:3000`
 from `Frontend` against the running production server.
+
+## Routine VPS updates
+
+Permanent FE-only, BE-only and combined update commands are in
+[docs/deploy-vps.md](docs/deploy-vps.md). Pull `origin/main`, then run
+`bash deploy/update-vps.sh fe`, `be`, or `both` as root on the VPS.
+The script reuses live configuration and does not rerun setup or migrations.

@@ -1,87 +1,107 @@
-# Toho Technology Indonesia - VPS Deployment
+# Toho Technology Indonesia - VPS update commands
 
-Run these commands as `root` on the VPS. Commit and push local changes to
-`origin/main` first; the VPS cannot pull uncommitted changes.
+This is the permanent reference for the current VPS. Routine updates reuse the
+working configuration and do not ask for database settings or passwords again.
 
-This uses the existing VPS Dockerfiles `Dockerfile.api` and `Dockerfile.fe`.
-They are not included in this local checkout. Preserve existing database/proxy
-settings and any extra container environment, network, or volume options.
+## Confirmed installation
 
-All browser API requests now use same-origin `/api/...`. `NEXT_PUBLIC_API_BASE_URL`
-is no longer used. In local development, Next.js proxies `/api` to
-`API_PROXY_TARGET` (default `http://127.0.0.1:5243`). On this VPS, Nginx proxies
-`/api/` directly to `127.0.0.1:5279` as configured below.
+| Setting | Current value |
+| --- | --- |
+| Repository directory | `/www/wwwroot/wms-toho` |
+| Git branch | `main` |
+| Domain | `https://wms.toho.my.id` |
+| Frontend image / container | `wms-toho-fe:latest` / `wms-toho-fe` |
+| Frontend published port | `8098:3000` |
+| Backend image / container | `wms-toho-api:latest` / `wms-toho-api` |
+| Backend published port | `5279:8080` |
+| Backend + MySQL network | `wms-toho-net` |
+| MySQL container / connection host | `mysql_vps` |
+| MySQL database / port | `wms-system-toho` / `3306` |
+| Existing API environment file | `/root/wms-toho-api.env` (server only) |
+| Nginx virtual host | `/www/server/panel/vhost/nginx/wms.toho.my.id.conf` |
+| Dockerfiles on VPS | `Dockerfile.fe`, `Dockerfile.api` |
 
-The API must share the `wms-toho-net` Docker network with `mysql_vps`.
-Its connection string is stored in `/root/wms-toho-api.env` with mode 600.
-Configure this using the database connection commands below before updating.
-Do not use `127.0.0.1` as the database host inside the API container.
+Run the commands as root. If logged in as `ubuntu`, first run `sudo -i`.
+The Dockerfiles already exist on the VPS; do not replace them during routine
+updates. Credentials are server-side only and are never stored in this guide.
+
+## Update frontend only
 
 ```bash
-set -e
 cd /www/wwwroot/wms-toho
-git pull --ff-only origin main
-
-# Build both images before stopping the API.
-test -f Dockerfile.api
-test -f Dockerfile.fe
-test -f database/remove_part_location.sql
-docker build -f Dockerfile.api -t wms-toho-api:latest .
-docker build -f Dockerfile.fe \
-  --build-arg NEXT_PUBLIC_API_BASE_URL="" \
-  -t wms-toho-fe:latest .
-
-# Stop writes, back up, then migrate. Enter the DB password when prompted.
-mkdir -p /root/wms-backups
-chmod 700 /root/wms-backups
-docker stop wms-toho-api
-mysqldump -h 127.0.0.1 -P 3306 -u yudaguntoro -p \
-  --single-transaction --no-tablespaces wms-system-toho \
-  > "/root/wms-backups/wms-toho-$(date +%Y%m%d-%H%M%S).sql"
-
-mysql -h 127.0.0.1 -P 3306 -u yudaguntoro -p \
-  wms-system-toho < database/remove_part_location.sql
-docker rm wms-toho-api
-docker run -d --name wms-toho-api \
-  --restart unless-stopped \
-  --network wms-toho-net \
-  --env-file /root/wms-toho-api.env \
-  -p 5279:8080 \
-  wms-toho-api:latest
-
-# Restart the frontend. Empty API URL uses the existing /api proxy.
-docker stop wms-toho-fe
-docker rm wms-toho-fe
-docker run -d --name wms-toho-fe \
-  --restart unless-stopped \
-  -p 8098:3000 \
-  wms-toho-fe:latest
-
-nginx -t
-/etc/init.d/nginx reload
-
-# Verify both containers and endpoints.
-docker ps | grep wms-toho
-curl --retry 10 --retry-connrefused --retry-delay 2 -fsS \
-  -o /dev/null -w 'Frontend HTTP %{http_code}\n' http://127.0.0.1:8098/signin
-curl -I https://wms.toho.my.id/
-docker logs --tail 30 wms-toho-api
+git pull --ff-only origin main && bash deploy/update-vps.sh fe
 ```
 
-If the API Dockerfile has a different name on the VPS, keep the existing API build command and only update the image/container using the commands above.
+Only the frontend is rebuilt and restarted. Backend and MySQL are untouched.
 
-The migration removes `parts.location_id` and its foreign key. Stock transaction
-locations remain intact. The migration can be run again safely. Do not run
-legacy normalization after removing this column.
+## Update backend only
 
-If backup or migration fails, stop at that error. Before the column is removed,
-resume the previous API with `docker start wms-toho-api`. After migration, use
-the new API image because the previous API expects that column.
+```bash
+cd /www/wwwroot/wms-toho
+git pull --ff-only origin main && bash deploy/update-vps.sh be
+```
 
-For an older database without customer master, apply `database/add_customers.sql`
-once before this update.
+Only the backend is rebuilt and restarted. Its current environment, credentials,
+mounts, extra hosts and network memberships are captured and reused. The primary
+backend network remains `wms-toho-net`; the database host remains `mysql_vps`.
 
-## Configure the VPS database connection
+## Update frontend and backend
+
+```bash
+cd /www/wwwroot/wms-toho
+git pull --ff-only origin main && bash deploy/update-vps.sh both
+```
+
+Both images are built before either service is stopped. The backend is updated
+first, then the frontend. `fe-be` is also accepted as a mode alias.
+
+## What the update script preserves
+
+`deploy/update-vps.sh` is tailored to the confirmed installation above:
+
+- No password prompt: snapshot the live selected containers' environment into
+  root-only files under `/root/wms-toho-updates/<timestamp>/` and reuse those files.
+- Keep the confirmed ports, mounts, extra hosts and network memberships. Reuse
+  the existing network; never delete or recreate the MySQL container/network.
+- Build all selected images before stopping any selected service. A build failure
+  leaves the running services untouched.
+- Keep the previous container until the replacement is ready. Restore it if
+  container creation or the readiness check fails.
+- Wait for frontend `/signin` HTTP 200 and backend `/api/parts` HTTP 401 or 200.
+  An unauthenticated API readiness response checks HTTP availability, not database
+  authentication. Confirm login and application data after an update.
+- No automatic SQL migration, credential reset, Nginx edit/reload, or MySQL restart.
+  The part-location removal migration has already been applied manually on the VPS.
+- Frontend browser requests stay same-origin `/api/...`. Do not change
+  `NEXT_PUBLIC_API_BASE_URL` to a localhost URL or separate API port.
+
+If preflight detects a missing container/network or a different API database host,
+it stops before replacing a running container. Consult the recovery section only
+when the working setup has actually changed. The script is for this known setup,
+not a general-purpose Docker/Compose replacement; custom runtime features beyond
+those listed above require updating the script first.
+
+## Quick checks after any update
+
+```bash
+docker ps --filter name=wms-toho
+curl -I https://wms.toho.my.id/signin
+curl -I https://wms.toho.my.id/parts
+docker logs --since 2m --tail 50 wms-toho-api
+```
+
+Check login, Staff List, and the Stock In part dropdown in the browser. Pages
+should return no-store headers, with no `s-maxage=31536000`. Static assets keep
+separate caching rules. A connection problem needs the latest API log; do not
+rebuild the frontend or rerun SQL migrations to fix a database network problem.
+
+## One-time configuration changes
+
+Routine update commands above never repeat these steps. The following sections
+are reference material for a new setup, recovery, or an explicitly requested
+Nginx change. They do not need to be rerun for each deployment.
+
+## Database recovery reference - not part of routine updates
 
 The existing VPS database container is `mysql_vps`. This procedure adds it to
 an application network without removing its existing networks. Enter the exact
@@ -192,3 +212,12 @@ with `HOSTNAME=0.0.0.0` and `PORT=3000`. Do not run `next start` for this output
 
 References: [Next.js headers](https://nextjs.org/docs/app/api-reference/config/next-config-js/headers)
 and [Nginx proxy cache](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_cache).
+
+## Testing the update script without a VPS
+
+Run `python3 deploy/tests/test_update_vps.py` with Bash and Python 3.10+ available.
+The test uses temporary directories and mocked Docker/curl functions; it never
+contacts Docker, MySQL, or the VPS. It checks all three modes, configuration
+preservation, build failure, failed container creation, readiness rollback, and
+preflight rejection for the wrong DB host or missing shared MySQL network.
+On Windows, set `WMS_TEST_BASH` to the Git for Windows `bash.exe` path.
